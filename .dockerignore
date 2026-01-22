@@ -1,0 +1,12 @@
+node_modules
+dist
+.next
+.git
+.env
+.venv
+venv
+__pycache__
+*.pyc
+.DS_Store
+coverage
+test

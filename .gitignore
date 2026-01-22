@@ -1,0 +1,30 @@
+# Node.js
+**/node_modules
+**/dist
+**/.next
+**/out
+.env*
+
+# Python
+**/venv
+**/env
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
+ai/models/*.pkl
+ai/models/*.joblib
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/index.lock

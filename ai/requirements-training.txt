@@ -1,0 +1,14 @@
+vnstock
+scikit-learn
+pandas
+numpy
+matplotlib
+joblib
+ta
+textblob
+requests
+beautifulsoup4
+lxml
+googletrans==4.0.0-rc1
+newspaper3k==0.2.8
+nltk==3.8.1
