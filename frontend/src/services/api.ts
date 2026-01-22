@@ -20,7 +20,21 @@ export interface PredictionResult {
     }[];
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const getApiUrl = () => {
+    // If we have an environment variable, use it
+    if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+
+    // If in browser, use the current host but point to /api
+    if (typeof window !== 'undefined') {
+        const host = window.location.origin;
+        if (host.includes('localhost')) return 'http://localhost:3001';
+        return `${host}/api`;
+    }
+
+    return 'http://localhost:3001';
+};
+
+const API_URL = getApiUrl();
 
 export const api = {
     async getPrediction(symbol: string): Promise<PredictionResult> {

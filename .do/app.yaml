@@ -2,12 +2,12 @@ name: stock-prediction
 region: sgp1
 services:
 - name: backend
-  dockerfile_path: Dockerfile.backend
+  dockerfile_path: Dockerfile
   source_dir: /
   github:
     branch: main
     deploy_on_push: true
-    repo: USERNAME/REPO_NAME  # You will need to update this after connecting via UI
+    repo: qthai2210/stock-prediction
   http_port: 3000
   instance_count: 1
   instance_size_slug: basic-xxs
@@ -22,7 +22,7 @@ services:
   github:
     branch: main
     deploy_on_push: true
-    repo: USERNAME/REPO_NAME # You will need to update this after connecting via UI
+    repo: qthai2210/stock-prediction
   http_port: 3000
   instance_count: 1
   instance_size_slug: basic-xxs
