@@ -1,7 +1,7 @@
 "use client";
 
 import { InfoCard } from "@/components/ui/InfoCard";
-import { Settings, Server, Cpu, Database, Save, RefreshCw } from 'lucide-react';
+import { Settings, Server, Cpu, Database, Save, RefreshCw, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SettingsPage() {
