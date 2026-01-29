@@ -22,6 +22,7 @@ COPY ai/requirements-training.txt ./ai/requirements-training.txt
 RUN pip3 install --no-cache-dir -r ai/requirements-training.txt
 
 # Copy AI source code
+# Copy AI source code
 COPY ai ./ai
 
 # --- Backend / NestJS Setup ---

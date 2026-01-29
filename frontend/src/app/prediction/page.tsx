@@ -25,14 +25,26 @@ export default function PredictionPage() {
         try {
             const result = await api.getPrediction(symbol.toUpperCase());
 
-            // Check if there was an error indicating training
+            // Check for processing/training status
+            if ((result as any).status === 'processing' || (result as any).status === 'training_required') {
+                setTraining(true);
+                // Poll again after 5 seconds
+                setTimeout(() => {
+                    handlePredict(e);
+                }, 5000);
+                return;
+            }
+
+            // Check if there was an error indicating training (Legacy check, keep just in case)
             if ('error' in result && (result as any).training) {
                 setTraining(true);
                 setError((result as any).error);
             } else if ('error' in result) {
                 setError((result as any).error);
+                setTraining(false);
             } else {
                 setData(result);
+                setTraining(false);
             }
         } catch (err: any) {
             // Check if response indicates training
@@ -104,8 +116,8 @@ export default function PredictionPage() {
                 {/* Error display */}
                 {error && !loading && (
                     <div className={`mt-4 p-4 rounded-xl flex items-center gap-3 ${training
-                            ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
-                            : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+                        ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+                        : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
                         }`}>
                         <AlertCircle className="w-5 h-5" />
                         <span className="text-sm font-medium">{error}</span>

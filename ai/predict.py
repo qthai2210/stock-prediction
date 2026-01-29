@@ -155,31 +155,7 @@ def get_prediction_data(symbol='VCB'):
         if not os.path.exists(model_path):
              # Try to train on demand
              try:
-                 # Import only here to avoid circular imports at top level if any
-                 from model_training_advanced import train_and_save_model
-                 
-                 # Redirect stdout/stderr to suppress training logs from polluting JSON output request
-                 # But we might want to log somewhere. For now, just suppress or log to stderr
-                 # Since `worker.py` captures stdout for JSON, anything printed to stdout during training will break it
-                 # So we MUST suppress stdout or redirect it to stderr
-                 
-                 # Note: train_and_save_model prints to stdout. We need to capture that.
-                 # Actually, let's just log to stderr that we are training
-                 log(f"⚠ Model for {symbol} not found. Triggering on-demand training...")
-                 log(f"⏱ This will take approximately 15-25 seconds...")
-                 
-                 # We need to capture the output of training so it doesn't leak to stdout
-                 # We can use the same redirect_stdout(sys.stderr) trick
-                 
-                 success = False
-                 with redirect_stdout(sys.stderr):
-                     success = train_and_save_model(symbol)
-                     
-                 if not success:
-                     return {"error": f"Failed to train model for {symbol}.", "training": True}
-                 
-                 # If success, proceed to load logic below
-                 log(f"✓ Training completed for {symbol}. Loading model...")
+                return {"status": "training_required", "symbol": symbol}
                  
              except Exception as train_error:
                  return {"error": f"Model not found and training failed: {train_error}", "training": True}
