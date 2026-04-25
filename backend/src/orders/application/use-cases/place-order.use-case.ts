@@ -22,18 +22,15 @@ export class PlaceOrderUseCase {
   async execute(input: PlaceOrderInput): Promise<Order> {
     this.validate(input);
 
-    const orderData: Partial<Order> & { userId: number } = {
-      symbol: input.symbol.toUpperCase(),
+    const orderData = Order.create({
+      symbol: input.symbol,
       type: input.type as any,
       orderType: input.orderType as any,
       quantity: input.quantity,
-      price: input.price || 0,
+      price: input.price,
       stopPrice: input.stopPrice,
-      status: input.orderType === 'MARKET' ? OrderStatus.FILLED : OrderStatus.PENDING,
-      filledQuantity: input.orderType === 'MARKET' ? input.quantity : 0,
-      avgFillPrice: input.orderType === 'MARKET' ? input.price : undefined,
       userId: input.userId,
-    };
+    });
 
     return await this.orderRepository.save(orderData);
   }

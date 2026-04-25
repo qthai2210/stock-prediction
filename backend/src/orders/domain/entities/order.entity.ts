@@ -33,6 +33,31 @@ export class Order {
     public readonly avgFillPrice?: number,
   ) {}
 
+  public static create(params: {
+    symbol: string;
+    type: OrderSide;
+    orderType: OrderType;
+    quantity: number;
+    price?: number;
+    stopPrice?: number;
+    userId: number;
+  }): Partial<Order> & { userId: number } {
+    const isMarket = params.orderType === OrderType.MARKET;
+    
+    return {
+      symbol: params.symbol.toUpperCase(),
+      type: params.type,
+      orderType: params.orderType,
+      quantity: params.quantity,
+      price: params.price || 0,
+      stopPrice: params.stopPrice,
+      status: isMarket ? OrderStatus.FILLED : OrderStatus.PENDING,
+      filledQuantity: isMarket ? params.quantity : 0,
+      avgFillPrice: isMarket ? params.price : undefined,
+      userId: params.userId,
+    };
+  }
+
   // Domain logic can go here
   public isFilled(): boolean {
     return this.status === OrderStatus.FILLED;

@@ -7,44 +7,44 @@ import {
   Get,
   UseGuards,
   Request,
+  Inject,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { CurrentUser } from '../auth/auth.decorators';
 import { JwtGuard } from '../auth/jwt.guard';
-import { OrdersService } from './orders.service';
+import { PlaceOrderUseCase, PlaceOrderInput } from './application/use-cases/place-order.use-case';
+import { IOrderRepository } from './domain/repositories/order.repository.interface';
 
 interface PlaceOrderDto {
   symbol: string;
   type: 'BUY' | 'SELL';
   orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT';
   quantity: number;
-  price: number;
+  price?: number;
+  stopPrice?: number;
 }
 
 @Controller('orders')
 @UseGuards(JwtGuard)
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly placeOrderUseCase: PlaceOrderUseCase,
+    @Inject(IOrderRepository)
+    private readonly orderRepository: IOrderRepository,
+  ) {}
 
-  /**
-   * POST /orders/place
-   * Rate-limited: 5 requests per second per IP
-   * Requires valid JWT Bearer token
-   * Body: { symbol, type, quantity, price }
-   */
   @Post('place')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ orders: { ttl: 1000, limit: 5 } })
   async placeOrder(@Body() dto: PlaceOrderDto, @Request() req: any) {
-    return this.ordersService.placeOrder(dto, req.user.sub);
+    const input: PlaceOrderInput = {
+      ...dto,
+      userId: req.user.sub,
+    };
+    return this.placeOrderUseCase.execute(input);
   }
 
-  /**
-   * GET /orders/my
-   * Fetch authenticated user's order history
-   */
   @Get('my')
   async getMyOrders(@Request() req: any) {
-    return this.ordersService.getOrdersByUser(req.user.sub);
+    return this.orderRepository.findByUser(req.user.sub);
   }
 }

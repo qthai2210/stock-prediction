@@ -3,14 +3,15 @@ import { PredictionController } from './prediction.controller';
 import { PredictionService } from './prediction.service';
 import { QueueModule } from '../queue/queue.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { RabbitMqModule } from '../infrastructure/rabbitmq/rabbitmq.module';
 import { IPredictionRepository } from './domain/repositories/prediction.repository.interface';
 import { PrismaPredictionRepository } from './infrastructure/persistence/prisma-prediction.repository';
 import { IPredictionQueue } from './domain/services/prediction-queue.interface';
-import { BullPredictionQueue } from './infrastructure/messaging/bull-prediction-queue';
+import { RabbitMqPredictionQueue } from './infrastructure/messaging/rabbitmq-prediction-queue';
 import { GetPredictionUseCase } from './application/use-cases/get-prediction.use-case';
 
 @Module({
-    imports: [QueueModule, PrismaModule],
+    imports: [QueueModule, PrismaModule, RabbitMqModule],
     controllers: [PredictionController],
     providers: [
         PredictionService,
@@ -21,7 +22,7 @@ import { GetPredictionUseCase } from './application/use-cases/get-prediction.use
         },
         {
             provide: IPredictionQueue,
-            useClass: BullPredictionQueue,
+            useClass: RabbitMqPredictionQueue,
         },
     ],
     exports: [PredictionService, GetPredictionUseCase],
