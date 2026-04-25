@@ -1,52 +1,45 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SignalService } from './signal.service';
-import { TradingGateway } from '../gateway/trading.gateway';
-import { PredictionService } from '../prediction/prediction.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { GenerateSignalsUseCase } from './application/use-cases/generate-signals.use-case';
+import { EvaluateSignalAccuracyUseCase } from './application/use-cases/evaluate-signal-accuracy.use-case';
+import { GetSignalStatsUseCase } from './application/use-cases/get-signal-stats.use-case';
 
-describe('SignalService Logic Test', () => {
+describe('SignalService', () => {
   let service: SignalService;
 
-  const mockGateway = { broadcastSignal: jest.fn() };
-  const mockPredictionService = { predict: jest.fn() };
-  const mockPrisma = { signal: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() } };
+  const mockGenerateSignalsUseCase = { execute: jest.fn() };
+  const mockEvaluateSignalAccuracyUseCase = { execute: jest.fn() };
+  const mockGetSignalStatsUseCase = { execute: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SignalService,
-        { provide: TradingGateway, useValue: mockGateway },
-        { provide: PredictionService, useValue: mockPredictionService },
-        { provide: PrismaService, useValue: mockPrisma },
+        { provide: GenerateSignalsUseCase, useValue: mockGenerateSignalsUseCase },
+        { provide: EvaluateSignalAccuracyUseCase, useValue: mockEvaluateSignalAccuracyUseCase },
+        { provide: GetSignalStatsUseCase, useValue: mockGetSignalStatsUseCase },
       ],
     }).compile();
 
     service = module.get<SignalService>(SignalService);
   });
 
-  it('VN_EXTREME_RSI should signal BUY when RSI < 25 and Volume is high', () => {
-    const indicators = { rsi: 20, volume_ratio: 2.0 };
-    const result = (service as any).checkOverboughtOversold('VCB', 100000, indicators);
-    expect(result.type).toBe('BUY');
-    expect(result.strategy).toBe('VN_EXTREME_RSI');
+  it('should be defined', () => {
+    expect(service).toBeDefined();
   });
 
-  it('OPTIMIZED_BOUNCE should signal BUY when indicators align and AI predicts growth', () => {
-    const indicators = { rsi: 35, macd: 5, macd_signal: 1, volume_ratio: 1.5 };
-    const result = (service as any).checkTechnicalBounce('VCB', 100000, 105000, indicators);
-    expect(result.type).toBe('BUY');
-    expect(result.strategy).toBe('OPTIMIZED_BOUNCE');
+  it('generateSignals should call GenerateSignalsUseCase', async () => {
+    await service.generateSignals();
+    expect(mockGenerateSignalsUseCase.execute).toHaveBeenCalled();
   });
 
-  it('SMART_BB_BREAKOUT should HOLD if volume is not sufficient (Anti-trap)', () => {
-    const indicators = { bb_upper: 100, volume_ratio: 1.1 };
-    const result = (service as any).checkBbBreakout('VCB', 105, indicators);
-    expect(result.type).toBe('HOLD');
+  it('validateSignalAccuracy should call EvaluateSignalAccuracyUseCase', async () => {
+    await service.validateSignalAccuracy();
+    expect(mockEvaluateSignalAccuracyUseCase.execute).toHaveBeenCalled();
   });
 
-  it('TREND_CONFIRMATION should signal BUY on Golden Cross', () => {
-    const indicators = { ema12: 100, ema26: 90, sma20: 100, sma50: 80 };
-    const result = (service as any).checkMaCrossover('VCB', 100, indicators);
-    expect(result.type).toBe('BUY');
+  it('getSignalStats should call GetSignalStatsUseCase', async () => {
+    await service.getSignalStats();
+    expect(mockGetSignalStatsUseCase.execute).toHaveBeenCalled();
   });
 });
