@@ -2,12 +2,34 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 jobs:
+  # Job to detect changes in specific directories
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend_ai: ${{ steps.filter.outputs.backend_ai }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend_ai:
+              - 'backend/**'
+              - 'ai/**'
+              - '.github/workflows/**'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/**'
+
   test-backend-ai:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend_ai == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -27,7 +49,6 @@ jobs:
         # Run python unit tests if available
         export PYTHONPATH=$PYTHONPATH:$(pwd)
         python ai/test_model.py
-        # Add other python tests here
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -47,6 +68,8 @@ jobs:
         npm run test
 
   build-frontend:
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
