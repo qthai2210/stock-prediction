@@ -1,20 +1,25 @@
 import { InfoCard } from "@/components/ui/InfoCard";
 import { PredictionChart } from "@/components/ui/PredictionChart";
 import { DollarSign, TrendingUp, Activity, BarChart3, ArrowRight } from "lucide-react";
+import { api } from "@/services/api";
 
-// Mock Data for initial UI
-const mockData = [
-  { date: 'Jan 1', price: 91000 },
-  { date: 'Jan 2', price: 92500 },
-  { date: 'Jan 3', price: 91800 },
-  { date: 'Jan 4', price: 93200 },
-  { date: 'Jan 5', price: 94100 },
-  { date: 'Jan 6', price: 93800 },
-  { date: 'Jan 7', price: 95000 },
-  { date: 'Jan 8', price: 96200 },
-];
+export default async function Home() {
+  const predictionResult = await api.getPrediction('VCB').catch(e => {
+    console.error(e);
+    return null;
+  });
 
-export default function Home() {
+  if (!predictionResult) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-white">Failed to load prediction data. Are the backend services running?</p>
+      </div>
+    );
+  }
+
+  // Determine trend
+  const isUp = predictionResult.change_pct > 0;
+  
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-10">
       {/* Header */}
@@ -41,32 +46,32 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <InfoCard
           title="Current Price"
-          value="95,000"
-          subValue="+1.2%"
-          trend="up"
+          value={predictionResult.latest_close.toLocaleString()}
+          subValue="Latest Close"
+          trend="neutral"
           icon={DollarSign}
           delay={0}
         />
         <InfoCard
           title="Predicted (T+1)"
-          value="96,200"
-          subValue="+1.26%"
-          trend="up"
+          value={Math.round(predictionResult.prediction).toLocaleString()}
+          subValue={`${isUp ? '+' : ''}${predictionResult.change_pct.toFixed(2)}%`}
+          trend={isUp ? "up" : "down"}
           icon={TrendingUp}
           delay={100}
         />
         <InfoCard
           title="Market Sentiment"
-          value="Positive"
-          subValue="Score: 0.75"
+          value={predictionResult.indicators.rsi > 70 ? "Overbought" : predictionResult.indicators.rsi < 30 ? "Oversold" : "Neutral"}
+          subValue={`RSI: ${predictionResult.indicators.rsi.toFixed(1)}`}
           trend="neutral"
           icon={Activity}
           delay={200}
         />
         <InfoCard
           title="Model Confidence"
-          value="94.2%"
-          subValue="High Accuracy"
+          value="High"
+          subValue="AI Based"
           trend="neutral"
           icon={BarChart3}
           delay={300}
@@ -77,7 +82,7 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Chart */}
         <div className="lg:col-span-2">
-          <PredictionChart data={mockData} />
+          <PredictionChart data={predictionResult.history} />
         </div>
 
         {/* Side Panel / Indicators */}
@@ -89,12 +94,14 @@ export default function Home() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-slate-400 text-sm font-medium">RSI (14)</span>
-                  <span className="text-emerald-400 font-bold text-sm">62.5</span>
+                  <span className="text-emerald-400 font-bold text-sm">{predictionResult.indicators.rsi.toFixed(1)}</span>
                 </div>
                 <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full w-[62.5%] rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
+                  <div className={`bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]`} style={{ width: `${Math.min(Math.max(predictionResult.indicators.rsi, 0), 100)}%` }}></div>
                 </div>
-                <p className="text-right text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">Neutral-Bullish</p>
+                <p className="text-right text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">
+                  {predictionResult.indicators.rsi > 70 ? "Overbought" : predictionResult.indicators.rsi < 30 ? "Oversold" : "Neutral"}
+                </p>
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-white/5">
@@ -103,11 +110,13 @@ export default function Home() {
                     MACD
                   </div>
                   <div>
-                    <p className="text-slate-300 text-sm font-semibold">Bullish Cross</p>
-                    <p className="text-slate-500 text-xs">Signal Line Crossover</p>
+                    <p className="text-slate-300 text-sm font-semibold">{predictionResult.indicators.macd >= 0 ? 'Bullish' : 'Bearish'}</p>
+                    <p className="text-slate-500 text-xs">Value: {predictionResult.indicators.macd.toFixed(2)}</p>
                   </div>
                 </div>
-                <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">BUY</span>
+                <span className={`px-2 py-1 rounded text-[10px] font-bold ${predictionResult.indicators.macd >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'} border`}>
+                  {predictionResult.indicators.macd >= 0 ? 'BUY' : 'SELL'}
+                </span>
               </div>
             </div>
           </div>
@@ -116,24 +125,22 @@ export default function Home() {
           <div className="glass-panel p-6 rounded-3xl">
             <h3 className="text-lg font-bold text-white mb-6">Key Drivers</h3>
             <div className="space-y-2">
-              {[
-                { name: 'Open Price', val: 92, color: 'bg-indigo-500' },
-                { name: 'Volume', val: 78, color: 'bg-cyan-500' },
-                { name: 'MA_50', val: 64, color: 'bg-sky-500' },
-                { name: 'Sentiment', val: 45, color: 'bg-slate-500' }
-              ].map((feature, i) => (
-                <div key={feature.name} className="group flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
-                  <div className="flex-1">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-slate-300 text-sm font-medium">{feature.name}</span>
-                      <span className="text-slate-500 text-xs">{feature.val}%</span>
-                    </div>
-                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                      <div className={`h-full ${feature.color} w-[${feature.val}%] rounded-full opacity-80 group-hover:opacity-100 transition-opacity`}></div>
+              {predictionResult.top_features?.map((feature, i) => {
+                const colors = ['bg-indigo-500', 'bg-cyan-500', 'bg-sky-500', 'bg-slate-500'];
+                return (
+                  <div key={feature.feature} className="group flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                    <div className="flex-1">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-slate-300 text-sm font-medium">{feature.feature}</span>
+                        <span className="text-slate-500 text-xs">{(feature.importance * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className={`h-full ${colors[i % colors.length]} rounded-full opacity-80 group-hover:opacity-100 transition-opacity`} style={{ width: `${feature.importance * 100}%` }}></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

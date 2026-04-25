@@ -36,6 +36,9 @@ RUN npm ci
 # Copy backend source code
 COPY backend ./
 
+# Generate Prisma Client
+RUN npx prisma generate
+
 # Build the NestJS application
 RUN npm run build
 

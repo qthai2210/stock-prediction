@@ -10,6 +10,10 @@ import io
 with redirect_stdout(sys.stderr):
     import vnstock
 
+try:
+    import xgboost as xgb
+except ImportError:
+    xgb = None
 from feature_engineering import prepare_features
 
 # Custom logger to stderr
@@ -202,7 +206,15 @@ def get_prediction_data(symbol='VCB'):
             "indicators": {
                 "rsi": float(latest_row.get('RSI', 0)),
                 "macd": float(latest_row.get('MACD', 0)),
-                "bb_pos": float(latest_row.get('BB_position', 0))
+                "macd_signal": float(latest_row.get('MACD_signal', 0)),
+                "bb_pos": float(latest_row.get('BB_position', 0)),
+                "bb_upper": float(latest_row.get('BB_high', 0)),
+                "bb_lower": float(latest_row.get('BB_low', 0)),
+                "sma20": float(latest_row.get('SMA20', 0)),
+                "sma50": float(latest_row.get('SMA50', 0)),
+                "ema12": float(latest_row.get('EMA_12', 0)),
+                "ema26": float(latest_row.get('EMA_26', 0)),
+                "volume_ratio": float(latest_row.get('volume_ratio', 0))
             },
             "history": history_data
         }

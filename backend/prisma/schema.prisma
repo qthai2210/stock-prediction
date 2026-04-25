@@ -1,0 +1,67 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Prediction {
+  id              Int      @id @default(autoincrement())
+  symbol          String
+  currentPrice    Float
+  predictedPrice  Float
+  changePercent   Float
+  rsi             Float
+  macd            Float
+  createdAt       DateTime @default(now())
+
+  @@index([symbol, createdAt])
+}
+
+model Signal {
+  id              Int      @id @default(autoincrement())
+  symbol          String
+  type            String   // BUY, SELL
+  strategy        String   @default("TECHNICAL_BOUNCE") // e.g. BB_BREAKOUT, MA_CROSSOVER, AI_ONLY
+  priceAtTime     Float
+  targetPrice     Float
+  confidence      Float
+  status          String   @default("ACTIVE") // ACTIVE, SUCCESS, FAIL, EXPIRED
+  actualPrice     Float?   // Price when closed
+  profitPct       Float?   // Calculated profit percentage
+  closedAt        DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([symbol, createdAt])
+  @@index([status])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("USER") // USER, ADMIN
+  createdAt    DateTime @default(now())
+  orders       Order[]
+}
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  symbol          String
+  type            String   // BUY, SELL
+  orderType       String   @default("LIMIT") // MARKET, LIMIT, STOP_LOSS, TAKE_PROFIT
+  quantity        Float
+  price           Float    // Limit price or trigger price
+  stopPrice       Float?   // For STOP_LOSS or TAKE_PROFIT
+  status          String   @default("PENDING") // PENDING, FILLED, CANCELLED, TRIGGERED
+  filledQuantity  Float    @default(0)
+  avgFillPrice    Float?
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([symbol, createdAt])
+}

@@ -74,5 +74,18 @@ export const api = {
             console.error('API Error:', error);
             throw error;
         }
+    },
+
+    async getSignalStats(): Promise<any> {
+        try {
+            const response = await fetch(`${API_URL}/signals/stats`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch signal stats');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
     }
 };

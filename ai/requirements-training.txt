@@ -12,3 +12,5 @@ lxml
 googletrans==4.0.0-rc1
 newspaper3k==0.2.8
 nltk==3.8.1
+xgboost
+

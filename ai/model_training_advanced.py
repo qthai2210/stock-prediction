@@ -22,7 +22,11 @@ def get_ml_libs():
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
     from sklearn.preprocessing import StandardScaler
     import joblib
-    return pd, np, GradientBoostingRegressor, LinearRegression, train_test_split, cross_val_score, mean_absolute_error, mean_squared_error, r2_score, StandardScaler, joblib
+    try:
+        import xgboost as xgb
+    except ImportError:
+        xgb = None
+    return pd, np, GradientBoostingRegressor, LinearRegression, train_test_split, cross_val_score, mean_absolute_error, mean_squared_error, r2_score, StandardScaler, joblib, xgb
 
 
 def fetch_data(symbol, start_date, end_date, vnstock):
@@ -38,12 +42,12 @@ def fetch_data(symbol, start_date, end_date, vnstock):
 
 def train_model(X, y, model_type='gradient_boosting'):
     """
-    Train model với Gradient Boosting hoặc Linear Regression
+    Train model với XGBoost, Gradient Boosting hoặc Linear Regression
     
     Args:
         X: Features
         y: Target
-        model_type: 'gradient_boosting' hoặc 'linear_regression'
+        model_type: 'xgboost', 'gradient_boosting' hoặc 'linear_regression'
     """
     from sklearn.ensemble import GradientBoostingRegressor
     from sklearn.linear_model import LinearRegression
@@ -62,61 +66,89 @@ def train_model(X, y, model_type='gradient_boosting'):
     print(f"   Features: {X.shape[1]}")
     
     # Choose model
+    if model_type == 'xgboost':
+        try:
+            import xgboost as xgb
+            print(f"   ✓ Using Advanced Gradient Boosting (XGBoost)")
+            
+            # Default XGBoost params
+            xgb_params = {
+                'n_estimators': 100,
+                'learning_rate': 0.05,
+                'max_depth': 6,
+                'subsample': 0.8,
+                'colsample_bytree': 0.8,
+                'gamma': 0.1,
+                'random_state': 42,
+                'n_jobs': -1,
+                'verbosity': 0
+            }
+            
+            # Try to load tuned params for xgboost
+            params_file = "ai/best_params_xgboost.json"
+            if os.path.exists(params_file):
+                import json
+                with open(params_file, 'r') as f:
+                    all_params = json.load(f)
+                if all_params:
+                    # Logic to get symbol or use first one
+                    first_symbol = list(all_params.keys())[0]
+                    tuned_params = all_params[first_symbol]
+                    model_params = {k: v for k, v in tuned_params.items() 
+                                   if k not in ['tuned_date', 'cv_score']}
+                    model_params['random_state'] = 42
+                    model_params['n_jobs'] = -1
+                    print(f"   ✓ Using tuned XGBoost parameters")
+                    model = xgb.XGBRegressor(**model_params)
+                else:
+                    model = xgb.XGBRegressor(**xgb_params)
+            else:
+                model = xgb.XGBRegressor(**xgb_params)
+        except ImportError:
+            print(f"   ⚠ XGBoost not installed. Falling back to GradientBoostingRegressor.")
+            model_type = 'gradient_boosting'
+            
     if model_type == 'gradient_boosting':
-        # Try to load tuned parameters
-        params_file = "ai/best_params.json"
-        symbol = None  # Will be passed from main, use default for now
-        
         # Default parameters - Optimized for speed!
         default_params = {
-            'n_estimators': 50,  # Reduced from 100 for faster training
-            'learning_rate': 0.15,  # Increased to compensate
-            'max_depth': 4,  # Reduced from 5 for speed
-            'min_samples_split': 10,  # Increased for speed
-            'min_samples_leaf': 4,  # Increased for speed
+            'n_estimators': 50,
+            'learning_rate': 0.15,
+            'max_depth': 4,
+            'min_samples_split': 10,
+            'min_samples_leaf': 4,
             'random_state': 42,
             'verbose': 0
         }
         
-        # Try to load tuned params
+        params_file = "ai/best_params.json"
         if os.path.exists(params_file):
             try:
                 import json
                 with open(params_file, 'r') as f:
                     all_params = json.load(f)
-                
-                # Check if we have params for this symbol (try to infer from context)
-                # For now, use first available tuned params
                 if all_params:
                     first_symbol = list(all_params.keys())[0]
                     tuned_params = all_params[first_symbol]
-                    
-                    # Extract only model params (remove metadata)
                     model_params = {k: v for k, v in tuned_params.items() 
                                    if k not in ['tuned_date', 'cv_score']}
                     model_params['random_state'] = 42
                     model_params['verbose'] = 0
-                    
                     print(f"   ✓ Using tuned parameters from {params_file}")
-                    print(f"   ✓ Tuned on: {tuned_params.get('tuned_date', 'unknown')}")
-                    print(f"   ✓ CV Score: {tuned_params.get('cv_score', 0):.4f}")
-                    
                     model = GradientBoostingRegressor(**model_params)
                 else:
-                    print(f"   ℹ Using default parameters (no tuned params available)")
                     model = GradientBoostingRegressor(**default_params)
             except Exception as e:
                 print(f"   ⚠ Error loading tuned params: {e}")
-                print(f"   ℹ Using default parameters")
                 model = GradientBoostingRegressor(**default_params)
         else:
-            print(f"   ℹ Using default parameters (run hyperparameter_tuning.py to optimize)")
             model = GradientBoostingRegressor(**default_params)
-    else:
+            
+    elif model_type == 'linear_regression':
         model = LinearRegression()
     
     # Train
     model.fit(X_train, y_train)
+
     
     # Evaluate
     train_predictions = model.predict(X_train)
@@ -136,8 +168,8 @@ def train_model(X, y, model_type='gradient_boosting'):
     print(f"   {'RMSE':<15} {train_rmse:<12.2f} {test_rmse:<12.2f}")
     print(f"   {'R² Score':<15} {train_r2:<12.4f} {test_r2:<12.4f}")
     
-    # Feature importance (cho Gradient Boosting)
-    if model_type == 'gradient_boosting' and hasattr(model, 'feature_importances_'):
+    # Feature importance (cho Gradient Boosting / XGBoost)
+    if (model_type in ['gradient_boosting', 'xgboost']) and hasattr(model, 'feature_importances_'):
         print(f"\n🔍 Top 10 Important Features:")
         feature_importance = sorted(
             zip(X.columns, model.feature_importances_),
@@ -200,8 +232,8 @@ def train_and_save_model(symbol):
     print(f"   Total samples: {len(X)}")
     print(f"   Features: {len(feature_cols)}")
     
-    # 4. Train Gradient Boosting model
-    model_gb, mae_gb, rmse_gb, r2_gb = train_model(X, y, model_type='gradient_boosting')
+    # 4. Train XGBoost model (Advanced Gradient Boosting)
+    model_gb, mae_gb, rmse_gb, r2_gb = train_model(X, y, model_type='xgboost')
     
     # 5. Train Linear Regression for comparison
     print("\n" + "="*60)
@@ -251,7 +283,7 @@ def train_and_save_model(symbol):
     latest_close = df_processed.iloc[-1]['close']
     
     print(f"   Latest Close Price: {latest_close:,.0f} VND")
-    print(f"   Gradient Boosting:  {prediction_gb:,.0f} VND ({((prediction_gb - latest_close) / latest_close * 100):+.2f}%)")
+    print(f"   XGBoost (Advanced): {prediction_gb:,.0f} VND ({((prediction_gb - latest_close) / latest_close * 100):+.2f}%)")
     print(f"   Linear Regression:  {prediction_lr:,.0f} VND ({((prediction_lr - latest_close) / latest_close * 100):+.2f}%)")
     
     return True
@@ -267,8 +299,10 @@ if __name__ == "__main__":
     # Load libraries
     print("\n⏳ Loading libraries...")
     try:
-        pd, np, GBR, LR, tts, cvs, mae_fn, mse_fn, r2_fn, scaler_cls, joblib = get_ml_libs()
+        pd, np, GBR, LR, tts, cvs, mae_fn, mse_fn, r2_fn, scaler_cls, joblib, xgb = get_ml_libs()
         print("✓ Libraries loaded successfully")
+        if xgb:
+            print(f"✓ XGBoost version: {xgb.__version__}")
     except Exception as e:
         print(f"❌ Error loading libraries: {e}")
         sys.exit(1)

@@ -9,11 +9,13 @@ import {
     Newspaper,
     TrendingUp,
     LineChart,
-    Activity
+    Activity,
+    Target
 } from 'lucide-react';
 
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+    { icon: Target, label: 'Performance', href: '/performance' },
     { icon: TrendingUp, label: 'Prediction', href: '/prediction' },
     { icon: Newspaper, label: 'Sentiment', href: '/news' },
     { icon: LineChart, label: 'Market', href: '/market' },
