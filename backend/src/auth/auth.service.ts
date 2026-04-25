@@ -28,6 +28,6 @@ export class AuthService {
   }
 
   async validateToken(token: string): Promise<JwtPayload> {
-    return this.validateTokenUseCase.execute(token);
+    return this.validateTokenUseCase.execute(token) as any;
   }
 }

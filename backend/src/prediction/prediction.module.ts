@@ -9,6 +9,7 @@ import { PrismaPredictionRepository } from './infrastructure/persistence/prisma-
 import { IPredictionQueue } from './domain/services/prediction-queue.interface';
 import { RabbitMqPredictionQueue } from './infrastructure/messaging/rabbitmq-prediction-queue';
 import { GetPredictionUseCase } from './application/use-cases/get-prediction.use-case';
+import { RunBacktestUseCase } from './application/use-cases/run-backtest.use-case';
 
 @Module({
     imports: [QueueModule, PrismaModule, RabbitMqModule],
@@ -16,6 +17,7 @@ import { GetPredictionUseCase } from './application/use-cases/get-prediction.use
     providers: [
         PredictionService,
         GetPredictionUseCase,
+        RunBacktestUseCase,
         {
             provide: IPredictionRepository,
             useClass: PrismaPredictionRepository,
@@ -25,6 +27,6 @@ import { GetPredictionUseCase } from './application/use-cases/get-prediction.use
             useClass: RabbitMqPredictionQueue,
         },
     ],
-    exports: [PredictionService, GetPredictionUseCase],
+    exports: [PredictionService, GetPredictionUseCase, RunBacktestUseCase],
 })
 export class PredictionModule { }

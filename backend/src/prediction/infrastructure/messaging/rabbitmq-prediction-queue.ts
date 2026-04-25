@@ -27,4 +27,34 @@ export class RabbitMqPredictionQueue implements IPredictionQueue {
       throw error;
     }
   }
+
+  async dispatchBacktestJob(symbol: string, days: number = 100): Promise<any> {
+    this.logger.log(`Dispatching backtest job for ${symbol} (${days} days) via RabbitMQ`);
+    
+    try {
+      const result = await firstValueFrom(
+        this.client.send({ cmd: 'backtest' }, { symbol, days })
+      );
+      
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to get backtest for ${symbol}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getSentiment(symbol: string): Promise<any> {
+    this.logger.log(`Dispatching sentiment job for ${symbol} via RabbitMQ`);
+    
+    try {
+      const result = await firstValueFrom(
+        this.client.send({ cmd: 'sentiment' }, { symbol })
+      );
+      
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to get sentiment for ${symbol}: ${error.message}`);
+      throw error;
+    }
+  }
 }

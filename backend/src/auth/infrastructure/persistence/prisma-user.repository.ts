@@ -18,11 +18,18 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async save(data: any): Promise<User> {
-    const prismaUser = await this.prisma.user.create({
-      data: {
+    const prismaUser = await this.prisma.user.upsert({
+      where: { email: data.email },
+      update: {
+        passwordHash: data.passwordHash,
+        role: data.role,
+        balance: data.balance,
+      },
+      create: {
         email: data.email,
         passwordHash: data.passwordHash,
         role: data.role,
+        balance: data.balance ?? 100000000,
       },
     });
     return this.mapToEntity(prismaUser);
@@ -34,6 +41,7 @@ export class PrismaUserRepository implements IUserRepository {
       prismaUser.email,
       prismaUser.role as UserRole,
       prismaUser.createdAt,
+      prismaUser.balance,
       prismaUser.passwordHash,
     );
   }

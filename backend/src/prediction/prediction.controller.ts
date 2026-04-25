@@ -9,4 +9,9 @@ export class PredictionController {
     async getPrediction(@Param('symbol') symbol: string) {
         return this.predictionService.predict(symbol);
     }
+
+    @Get(':symbol/backtest')
+    async backtest(@Param('symbol') symbol: string) {
+        return this.predictionService.backtest(symbol);
+    }
 }

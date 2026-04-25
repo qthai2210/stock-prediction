@@ -42,8 +42,22 @@ model User {
   email        String   @unique
   passwordHash String
   role         String   @default("USER") // USER, ADMIN
+  balance      Float    @default(100000000) // Initial balance (100M VND)
   createdAt    DateTime @default(now())
   orders       Order[]
+  positions    Position[]
+}
+
+model Position {
+  id        Int      @id @default(autoincrement())
+  symbol    String
+  quantity  Float
+  avgPrice  Float
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
 }
 
 model Order {

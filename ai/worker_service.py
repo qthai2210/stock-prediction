@@ -5,6 +5,8 @@ import os
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from predict import get_prediction_data
+from backtest_strategies import backtest_strategy
+from news_scraper import get_news_data
 
 # Configuration from environment variables
 RABBITMQ_URL = os.getenv('RABBITMQ_URL', 'amqp://admin:password123@localhost:5672')
@@ -14,24 +16,38 @@ def process_task(ch, method, props, body):
     try:
         # NestJS Microservice message structure: { pattern: any, data: any, id: string }
         message = json.loads(body)
-        pattern = message.get('pattern')
+        pattern = message.get('pattern', {})
+        cmd = pattern.get('cmd') if isinstance(pattern, dict) else pattern
         data = message.get('data', {})
         symbol = data.get('symbol', 'VCB')
+        days = data.get('days', 100)
         
-        print(f"📥 [Process] Received request for symbol: {symbol}")
+        print(f"📥 [Process] Received request: {cmd} for symbol: {symbol}")
         
-        # Process logic
-        result = get_prediction_data(symbol)
+        result = {}
+        if cmd == 'predict':
+            result = get_prediction_data(symbol)
+            
+            if result.get('status') == 'training_required':
+                print(f"⚙️ Training model for {symbol}...")
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                training_script = os.path.join(current_dir, 'model_training_advanced.py')
+                process = subprocess.run([sys.executable, training_script, symbol], capture_output=True, text=True)
+                if process.returncode == 0:
+                    result = get_prediction_data(symbol)
+                else:
+                    result = {"error": f"Training failed: {process.stderr}"}
         
-        if result.get('status') == 'training_required':
-            print(f"⚙️ Training model for {symbol}...")
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            training_script = os.path.join(current_dir, 'model_training_advanced.py')
-            process = subprocess.run([sys.executable, training_script, symbol], capture_output=True, text=True)
-            if process.returncode == 0:
-                result = get_prediction_data(symbol)
-            else:
-                result = {"error": f"Training failed: {process.stderr}"}
+        elif cmd == 'backtest':
+            print(f"📊 Running backtest for {symbol} ({days} days)...")
+            result = backtest_strategy(symbol, days)
+        
+        elif cmd == 'sentiment':
+            print(f"📰 Fetching sentiment for {symbol}...")
+            result = get_news_data(symbol)
+        
+        else:
+            result = {"error": f"Unknown command: {cmd}"}
 
         # NestJS Expects Response structure: { err: any, response: any, id: string }
         response = {

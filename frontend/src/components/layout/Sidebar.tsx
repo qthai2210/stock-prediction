@@ -10,11 +10,17 @@ import {
     TrendingUp,
     LineChart,
     Activity,
-    Target
+    Target,
+    History,
+    Radio,
+    Briefcase
 } from 'lucide-react';
 
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+    { icon: Briefcase, label: 'Portfolio', href: '/portfolio' },
+    { icon: Radio, label: 'Live Signals', href: '/live' },
+    { icon: History, label: 'Backtest', href: '/prediction/backtest' },
     { icon: Target, label: 'Performance', href: '/performance' },
     { icon: TrendingUp, label: 'Prediction', href: '/prediction' },
     { icon: Newspaper, label: 'Sentiment', href: '/news' },

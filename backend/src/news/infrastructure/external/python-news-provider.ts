@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { spawn } from 'child_process';
-import * as path from 'path';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import { INewsProvider } from '../../domain/services/news-provider.interface';
 import { NewsSentiment } from '../../domain/entities/news-sentiment.entity';
 
@@ -8,43 +8,38 @@ import { NewsSentiment } from '../../domain/entities/news-sentiment.entity';
 export class PythonNewsProvider implements INewsProvider {
   private readonly logger = new Logger(PythonNewsProvider.name);
 
+  constructor(
+    @Inject('AI_SERVICE') private readonly client: ClientProxy
+  ) {}
+
   async getNewsSentiment(symbol: string): Promise<NewsSentiment> {
-    return new Promise((resolve, reject) => {
-      const pythonScriptPath = path.join(process.cwd(), 'src', 'worker', 'news_worker.py');
-      const pythonProcess = spawn('python', [pythonScriptPath, symbol]);
+    this.logger.log(`Fetching news sentiment for ${symbol} via RabbitMQ`);
+    
+    try {
+      const result = await firstValueFrom(
+        this.client.send({ cmd: 'sentiment' }, { symbol })
+      );
 
-      let dataString = '';
-      let errorString = '';
+      if (result && result.error) {
+        throw new Error(result.error);
+      }
 
-      pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-      });
+      return new NewsSentiment(
+        result.symbol || symbol,
+        result.sentiment || 0,
+        this.getLabel(result.sentiment),
+        result.headlines ? result.headlines.length : 0,
+        result.headlines || []
+      );
+    } catch (error) {
+      this.logger.error(`Failed to get news sentiment for ${symbol}: ${error.message}`);
+      throw error;
+    }
+  }
 
-      pythonProcess.stderr.on('data', (data) => {
-        errorString += data.toString();
-      });
-
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          this.logger.error(`Python script exited with code ${code}: ${errorString}`);
-          reject(`News analysis failed: ${errorString}`);
-          return;
-        }
-
-        try {
-          const jsonResult = JSON.parse(dataString);
-          resolve(new NewsSentiment(
-            jsonResult.symbol || symbol,
-            jsonResult.sentiment_score || 0,
-            jsonResult.sentiment_label || 'NEUTRAL',
-            jsonResult.article_count || 0,
-            jsonResult.articles || []
-          ));
-        } catch (error) {
-          this.logger.error(`Failed to parse JSON: ${error}, Data: ${dataString}`);
-          reject('Failed to parse news results');
-        }
-      });
-    });
+  private getLabel(score: number): string {
+    if (score >= 0.6) return 'BULLISH';
+    if (score <= 0.4) return 'BEARISH';
+    return 'NEUTRAL';
   }
 }

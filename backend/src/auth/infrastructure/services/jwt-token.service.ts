@@ -10,7 +10,7 @@ export class JwtTokenService implements ITokenService {
     return this.jwtService.sign(payload);
   }
 
-  verify<T>(token: string): T {
+  verify<T extends object>(token: string): T {
     return this.jwtService.verify<T>(token);
   }
 }

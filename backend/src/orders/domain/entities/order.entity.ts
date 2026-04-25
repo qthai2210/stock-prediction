@@ -25,12 +25,12 @@ export class Order {
     public readonly orderType: OrderType,
     public readonly quantity: number,
     public readonly price: number,
-    public readonly status: OrderStatus,
+    public status: OrderStatus,
     public readonly userId: number,
     public readonly createdAt: Date,
     public readonly stopPrice?: number,
-    public readonly filledQuantity?: number,
-    public readonly avgFillPrice?: number,
+    public filledQuantity?: number,
+    public avgFillPrice?: number,
   ) {}
 
   public static create(params: {

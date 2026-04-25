@@ -10,4 +10,14 @@ export class BullPredictionQueue implements IPredictionQueue {
   async dispatchPredictionJob(symbol: string): Promise<PredictionResult> {
     return this.queueService.dispatchPredictionJob(symbol);
   }
+
+  async dispatchBacktestJob(symbol: string, days?: number): Promise<any> {
+    // For now, redirect to the same pattern if Bull is used, 
+    // but ideally we should update QueueService to handle backtests too.
+    return { error: 'Backtesting not yet implemented for Bull queue' };
+  }
+
+  async getSentiment(symbol: string): Promise<any> {
+    return { error: 'Sentiment analysis not yet implemented for Bull queue' };
+  }
 }

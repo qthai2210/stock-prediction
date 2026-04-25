@@ -1,6 +1,6 @@
 export interface ITokenService {
   sign(payload: any): string;
-  verify<T>(token: string): T;
+  verify<T extends object>(token: string): T;
 }
 
 export const ITokenService = Symbol('ITokenService');
