@@ -1,23 +1,25 @@
 export interface PredictionResult {
     symbol: string;
-    latest_date: string;
-    latest_close: number;
-    prediction: number;
-    change: number;
-    change_pct: number;
-    indicators: {
+    latest_date?: string;
+    latest_close?: number;
+    prediction?: number;
+    change?: number;
+    change_pct?: number;
+    indicators?: {
         rsi: number;
         macd: number;
         bb_pos: number;
     };
-    history: {
+    history?: {
         date: string;
         price: number;
     }[];
-    top_features: {
+    top_features?: {
         feature: string;
         importance: number;
     }[];
+    status?: 'completed' | 'processing' | 'failed';
+    message?: string;
 }
 
 const getApiUrl = () => {

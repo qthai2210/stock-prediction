@@ -32,56 +32,7 @@ export class PlaceOrderUseCase {
     const user = await this.userRepository.findById(input.userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const totalCost = input.quantity * input.price;
-
-    if (input.type === 'BUY') {
-      if (user.balance < totalCost) {
-        throw new BadRequestException('Insufficient balance for this trade');
-      }
-      
-      // Update User Balance
-      await this.userRepository.save({
-        ...user,
-        balance: user.balance - totalCost
-      });
-
-      // Update Position
-      const existingPos = await this.positionRepository.findByUserAndSymbol(input.userId, input.symbol);
-      if (existingPos) {
-        const newQuantity = existingPos.quantity + input.quantity;
-        const newAvgPrice = ((existingPos.avgPrice * existingPos.quantity) + totalCost) / newQuantity;
-        await this.positionRepository.save(new Position(existingPos.id, input.symbol, newQuantity, newAvgPrice, input.userId));
-      } else {
-        await this.positionRepository.save(Position.create({
-          symbol: input.symbol,
-          quantity: input.quantity,
-          avgPrice: input.price,
-          userId: input.userId
-        }));
-      }
-    } else {
-      // SELL Logic
-      const existingPos = await this.positionRepository.findByUserAndSymbol(input.userId, input.symbol);
-      if (!existingPos || existingPos.quantity < input.quantity) {
-        throw new BadRequestException('Insufficient stock quantity to sell');
-      }
-
-      // Update User Balance
-      await this.userRepository.save({
-        ...user,
-        balance: (user.balance || 0) + totalCost
-      });
-
-      // Update Position
-      const newQuantity = existingPos.quantity - input.quantity;
-      if (newQuantity === 0) {
-        await this.positionRepository.delete(input.userId, input.symbol);
-      } else {
-        await this.positionRepository.save(new Position(existingPos.id, input.symbol, newQuantity, existingPos.avgPrice, input.userId));
-      }
-    }
-
-    // Save Order as FILLED (Immediate execution for paper trading)
+    // Create Order instance to determine initial status
     const orderData = Order.create({
       symbol: input.symbol,
       type: input.type as any,
@@ -91,9 +42,59 @@ export class PlaceOrderUseCase {
       stopPrice: input.stopPrice,
       userId: input.userId,
     });
-    orderData.status = OrderStatus.FILLED;
-    orderData.filledQuantity = input.quantity;
-    orderData.avgFillPrice = input.price;
+
+    const isFilled = orderData.status === OrderStatus.FILLED;
+
+    if (isFilled) {
+      const totalCost = input.quantity * input.price;
+
+      if (input.type === 'BUY') {
+        if (user.balance < totalCost) {
+          throw new BadRequestException('Insufficient balance for this trade');
+        }
+        
+        // Update User Balance
+        await this.userRepository.save({
+          ...user,
+          balance: user.balance - totalCost
+        });
+
+        // Update Position
+        const existingPos = await this.positionRepository.findByUserAndSymbol(input.userId, input.symbol);
+        if (existingPos) {
+          const newQuantity = existingPos.quantity + input.quantity;
+          const newAvgPrice = ((existingPos.avgPrice * existingPos.quantity) + totalCost) / newQuantity;
+          await this.positionRepository.save(new Position(existingPos.id, input.symbol, newQuantity, newAvgPrice, input.userId));
+        } else {
+          await this.positionRepository.save(Position.create({
+            symbol: input.symbol,
+            quantity: input.quantity,
+            avgPrice: input.price,
+            userId: input.userId
+          }));
+        }
+      } else {
+        // SELL Logic
+        const existingPos = await this.positionRepository.findByUserAndSymbol(input.userId, input.symbol);
+        if (!existingPos || existingPos.quantity < input.quantity) {
+          throw new BadRequestException('Insufficient stock quantity to sell');
+        }
+
+        // Update User Balance
+        await this.userRepository.save({
+          ...user,
+          balance: (user.balance || 0) + totalCost
+        });
+
+        // Update Position
+        const newQuantity = existingPos.quantity - input.quantity;
+        if (newQuantity === 0) {
+          await this.positionRepository.delete(input.userId, input.symbol);
+        } else {
+          await this.positionRepository.save(new Position(existingPos.id, input.symbol, newQuantity, existingPos.avgPrice, input.userId));
+        }
+      }
+    }
 
     return await this.orderRepository.save(orderData);
   }
