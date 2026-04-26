@@ -7,8 +7,9 @@ import { Order, OrderSide, OrderType, OrderStatus } from '../../domain/entities/
 export class PrismaOrderRepository implements IOrderRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(data: any): Promise<Order> {
-    const prismaOrder = await this.prisma.order.create({
+  async save(data: any, tx?: any): Promise<Order> {
+    const client = tx || this.prisma;
+    const prismaOrder = await client.order.create({
       data: {
         symbol: data.symbol,
         type: data.type,
@@ -39,8 +40,9 @@ export class PrismaOrderRepository implements IOrderRepository {
     return prismaOrders.map(this.mapToEntity);
   }
 
-  async updateStatus(id: number, status: OrderStatus): Promise<Order> {
-    const prismaOrder = await this.prisma.order.update({
+  async updateStatus(id: number, status: OrderStatus, tx?: any): Promise<Order> {
+    const client = tx || this.prisma;
+    const prismaOrder = await client.order.update({
       where: { id },
       data: { status },
     });

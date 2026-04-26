@@ -17,8 +17,9 @@ export class PrismaUserRepository implements IUserRepository {
     return prismaUser ? this.mapToEntity(prismaUser) : null;
   }
 
-  async save(data: any): Promise<User> {
-    const prismaUser = await this.prisma.user.upsert({
+  async save(data: any, tx?: any): Promise<User> {
+    const client = tx || this.prisma;
+    const prismaUser = await client.user.upsert({
       where: { email: data.email },
       update: {
         passwordHash: data.passwordHash,

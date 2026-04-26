@@ -23,8 +23,9 @@ export class PrismaPositionRepository implements IPositionRepository {
     return prismaPosition ? this.mapToEntity(prismaPosition) : null;
   }
 
-  async save(position: Position): Promise<Position> {
-    const prismaPosition = await this.prisma.position.upsert({
+  async save(position: Position, tx?: any): Promise<Position> {
+    const client = tx || this.prisma;
+    const prismaPosition = await client.position.upsert({
       where: {
         userId_symbol: { userId: position.userId, symbol: position.symbol },
       },
@@ -42,8 +43,9 @@ export class PrismaPositionRepository implements IPositionRepository {
     return this.mapToEntity(prismaPosition);
   }
 
-  async delete(userId: number, symbol: string): Promise<void> {
-    await this.prisma.position.delete({
+  async delete(userId: number, symbol: string, tx?: any): Promise<void> {
+    const client = tx || this.prisma;
+    await client.position.delete({
       where: {
         userId_symbol: { userId, symbol },
       },
