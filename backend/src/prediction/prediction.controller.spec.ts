@@ -12,7 +12,8 @@ describe('PredictionController', () => {
         {
           provide: PredictionService,
           useValue: {
-            getPrediction: jest.fn(),
+            predict: jest.fn(),
+            backtest: jest.fn(),
           },
         },
       ],
