@@ -93,7 +93,11 @@ export const api = {
         }
     },
 
-    async getSignalStats(): Promise<any> {
+    async getSignalStats(): Promise<{
+        total_active: number;
+        avg_confidence: number;
+        top_strategy: string;
+    }> {
         try {
             const response = await fetch(`${API_URL}/signals/stats`);
             if (!response.ok) {

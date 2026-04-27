@@ -35,10 +35,11 @@ export class JwtGuard implements CanActivate {
       );
     }
 
-    const payload: JwtPayload = await this.authService.validateToken(token);
+    const payload = this.authService.validateToken(token);
 
     // Attach user payload to request for downstream controllers
-    (request as any).user = payload;
+    const authRequest = request as unknown as { user: JwtPayload };
+    authRequest.user = payload;
 
     return true;
   }

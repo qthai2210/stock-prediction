@@ -16,23 +16,26 @@ export class PythonNewsProvider implements INewsProvider {
     this.logger.log(`Fetching news sentiment for ${symbol} via RabbitMQ`);
     
     try {
-      const result = await firstValueFrom(
+      const result: { symbol?: string; sentiment?: number; headlines?: string[]; error?: string } = await firstValueFrom(
         this.client.send({ cmd: 'sentiment' }, { symbol })
       );
 
       if (result && result.error) {
-        throw new Error(result.error);
+        throw new Error(result.error || 'Unknown error');
       }
+
+      const sentiment = result.sentiment ?? 0;
 
       return new NewsSentiment(
         result.symbol || symbol,
-        result.sentiment || 0,
-        this.getLabel(result.sentiment),
+        sentiment,
+        this.getLabel(sentiment),
         result.headlines ? result.headlines.length : 0,
         result.headlines || []
       );
-    } catch (error) {
-      this.logger.error(`Failed to get news sentiment for ${symbol}: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to get news sentiment for ${symbol}: ${errorMessage}`);
       throw error;
     }
   }

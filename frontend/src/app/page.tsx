@@ -207,7 +207,7 @@ export default function Dashboard() {
                             <div className="glass-panel p-8 rounded-[32px]">
                                 <h3 className="text-lg font-bold text-white mb-6">Price Drivers</h3>
                                 <div className="space-y-5">
-                                    {(data.top_features || []).slice(0, 4).map((feature, i) => (
+                                    {(data.top_features || []).slice(0, 4).map((feature) => (
                                         <div key={feature.feature} className="space-y-2">
                                             <div className="flex justify-between items-center">
                                                 <span className="text-slate-300 text-xs font-bold capitalize">{feature.feature.replace(/_/g, ' ')}</span>

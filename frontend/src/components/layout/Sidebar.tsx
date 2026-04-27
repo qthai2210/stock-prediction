@@ -7,7 +7,6 @@ import {
     LayoutDashboard,
     Settings,
     Newspaper,
-    TrendingUp,
     LineChart,
     Activity,
     Target,

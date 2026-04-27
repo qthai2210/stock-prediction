@@ -2,13 +2,36 @@
 
 import React from 'react';
 import { 
-  PieChart, Pie, Cell, ResponsiveContainer, 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import { TrendingUp, Target, AlertTriangle, Clock, BarChart2 } from 'lucide-react';
+import { TrendingUp, BarChart2 } from 'lucide-react';
+
+interface StrategyStat {
+  success: number;
+  total: number;
+  profit: number;
+}
+
+interface SignalLog {
+  id: string;
+  strategy: string;
+  symbol: string;
+  type: 'BUY' | 'SELL';
+  status: 'SUCCESS' | 'FAIL' | 'PENDING';
+  profitPct?: number;
+}
+
+interface PerformanceStats {
+  summary: {
+    total: number;
+    winRate: number;
+  };
+  strategyStats: Record<string, StrategyStat>;
+  recentSignals: SignalLog[];
+}
 
 interface StatsProps {
-  stats: any;
+  stats: PerformanceStats;
 }
 
 export const PerformanceDashboard: React.FC<StatsProps> = ({ stats }) => {
@@ -16,7 +39,7 @@ export const PerformanceDashboard: React.FC<StatsProps> = ({ stats }) => {
 
   const { summary, strategyStats, recentSignals } = stats;
 
-  const strategyData = Object.entries(strategyStats).map(([key, value]: [string, any]) => ({
+  const strategyData = Object.entries(strategyStats).map(([key, value]) => ({
     name: key.replace('_', ' '),
     winRate: parseFloat(((value.success / (value.total || 1)) * 100).toFixed(1)),
     avgProfit: parseFloat((value.profit / (value.total || 1)).toFixed(2)),
@@ -108,7 +131,7 @@ export const PerformanceDashboard: React.FC<StatsProps> = ({ stats }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {recentSignals.map((signal: any) => (
+              {recentSignals.map((signal) => (
                 <tr key={signal.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-4">
                     <span className="text-indigo-400 text-xs font-mono font-bold tracking-tighter uppercase px-2 py-1 rounded bg-indigo-500/5 border border-indigo-500/10">

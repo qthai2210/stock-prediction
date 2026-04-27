@@ -32,7 +32,13 @@ export class PythonMarketProvider implements IMarketProvider {
         }
 
         try {
-          const jsonResult = JSON.parse(dataString);
+          const jsonResult = JSON.parse(dataString) as {
+            vn_index?: IndexData;
+            hnx_index?: IndexData;
+            upcom_index?: IndexData;
+            top_gainers?: StockSnapshot[];
+            top_losers?: StockSnapshot[];
+          };
           resolve(this.mapToEntity(jsonResult));
         } catch (error) {
           this.logger.error(`Failed to parse JSON: ${error}, Data: ${dataString}`);

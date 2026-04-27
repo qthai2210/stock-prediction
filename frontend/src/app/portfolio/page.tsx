@@ -5,17 +5,37 @@ import {
   Wallet, 
   Briefcase, 
   TrendingUp, 
-  TrendingDown, 
-  ArrowRightLeft, 
   PieChart,
   ArrowUpRight,
   ArrowDownRight,
   History
 } from 'lucide-react';
 
+interface Position {
+  symbol: string;
+  quantity: number;
+  avgPrice: number;
+  totalCost: number;
+}
+
+interface PortfolioData {
+  balance: number;
+  positions: Position[];
+}
+
+interface Order {
+  id: string;
+  symbol: string;
+  type: 'BUY' | 'SELL';
+  status: string;
+  quantity: number;
+  price: number;
+  createdAt: string;
+}
+
 export default function PortfolioPage() {
-  const [data, setData] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [data, setData] = useState<PortfolioData | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +66,7 @@ export default function PortfolioPage() {
     </div>
   );
 
-  const totalPositionsValue = data?.positions.reduce((acc: number, p: any) => acc + p.totalCost, 0) || 0;
+  const totalPositionsValue = data?.positions.reduce((acc: number, p) => acc + p.totalCost, 0) || 0;
   const totalValue = (data?.balance || 0) + totalPositionsValue;
 
   return (
@@ -123,7 +143,7 @@ export default function PortfolioPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {data?.positions.map((pos: any) => (
+                  {data?.positions.map((pos) => (
                     <tr key={pos.symbol} className="hover:bg-white/5 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -165,7 +185,7 @@ export default function PortfolioPage() {
             </div>
             
             <div className="space-y-4">
-              {orders.slice(0, 5).map((order: any) => (
+              {orders.slice(0, 5).map((order) => (
                 <div key={order.id} className="glass-panel p-4 rounded-2xl flex items-center justify-between group hover:border-white/10 transition-all">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${

@@ -2,8 +2,13 @@
 
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
+interface ChartDataPoint {
+    date: string;
+    price: number;
+}
+
 interface PredictionChartProps {
-    data: any[];
+    data: ChartDataPoint[];
 }
 
 export function PredictionChart({ data }: PredictionChartProps) {
