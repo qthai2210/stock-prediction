@@ -1,5 +1,5 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
-import { ITokenService } from '../../domain/services/token.service.interface';
+import { ITokenService, JwtPayload } from '../../domain/services/token.service.interface';
 
 @Injectable()
 export class ValidateTokenUseCase {
@@ -8,7 +8,7 @@ export class ValidateTokenUseCase {
     private readonly tokenService: ITokenService,
   ) {}
 
-  execute(token: string) {
+  execute(token: string): JwtPayload {
     try {
       return this.tokenService.verify(token);
     } catch {

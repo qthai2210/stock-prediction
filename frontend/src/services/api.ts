@@ -38,6 +38,21 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+export interface NewsData {
+    sentiment: number;
+    headlines: string[];
+    symbol: string;
+}
+
+export interface MarketData {
+    vn_index: { value: number; change: number; changePercent: number; volume: number };
+    hnx_index: { value: number; change: number; changePercent: number; volume: number };
+    upcom_index: { value: number; change: number; changePercent: number; volume: number };
+    top_gainers: { symbol: string; price: number; change: number; changePercent: number; volume: number }[];
+    top_losers: { symbol: string; price: number; change: number; changePercent: number; volume: number }[];
+    updatedAt: string;
+}
+
 export const api = {
     async getPrediction(symbol: string): Promise<PredictionResult> {
         try {
@@ -52,7 +67,7 @@ export const api = {
         }
     },
 
-    async getNews(symbol: string): Promise<any> {
+    async getNews(symbol: string): Promise<NewsData> {
         try {
             const response = await fetch(`${API_URL}/news/${symbol}`);
             if (!response.ok) {
@@ -65,7 +80,7 @@ export const api = {
         }
     },
 
-    async getMarketOverview(): Promise<any> {
+    async getMarketOverview(): Promise<MarketData> {
         try {
             const response = await fetch(`${API_URL}/market/overview`);
             if (!response.ok) {

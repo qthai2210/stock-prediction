@@ -1,14 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, TrendingUp, Target, BarChart3, Clock, AlertCircle } from 'lucide-react';
+import { Search, TrendingUp, BarChart3, Clock, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+interface StrategyResult {
+  avg_profit: number;
+  win_rate: number;
+  trades: number;
+}
+
+interface BacktestResults {
+  strategies: Record<string, StrategyResult>;
+}
 
 export default function BacktestPage() {
   const [symbol, setSymbol] = useState('VCB');
   const [days, setDays] = useState(100);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<BacktestResults | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const runBacktest = async () => {
@@ -19,14 +29,14 @@ export default function BacktestPage() {
       if (!response.ok) throw new Error('Failed to run backtest');
       const data = await response.json();
       setResults(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const chartData = results ? Object.entries(results.strategies).map(([name, data]: [string, any]) => ({
+  const chartData = results ? Object.entries(results.strategies).map(([name, data]) => ({
     name: name.replace(/_/g, ' '),
     profit: data.avg_profit,
     winRate: data.win_rate,
@@ -94,7 +104,7 @@ export default function BacktestPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Stats Overview */}
             <div className="lg:col-span-1 space-y-6">
-              {Object.entries(results.strategies).map(([name, data]: [string, any]) => (
+              {Object.entries(results.strategies).map(([name, data]) => (
                 <div key={name} className="glass-card p-6 rounded-3xl hover:scale-[1.02] transition-all">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-bold text-slate-200">{name.replace(/_/g, ' ')}</h3>
@@ -163,7 +173,7 @@ export default function BacktestPage() {
                       }}
                     />
                     <Bar dataKey="profit" radius={[8, 8, 0, 0]} barSize={40}>
-                      {chartData.map((entry: any, index: number) => (
+                      {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.profit > 0 ? '#10b981' : '#ef4444'} />
                       ))}
                     </Bar>

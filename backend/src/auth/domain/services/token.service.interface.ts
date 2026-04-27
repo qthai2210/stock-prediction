@@ -1,6 +1,14 @@
+export interface JwtPayload {
+  sub: number;
+  email: string;
+  role: string;
+  iat?: number;
+  exp?: number;
+}
+
 export interface ITokenService {
   sign(payload: any): string;
-  verify<T extends object>(token: string): T;
+  verify(token: string): JwtPayload;
 }
 
 export const ITokenService = Symbol('ITokenService');

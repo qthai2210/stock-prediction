@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api, PredictionResult } from '@/services/api';
 import { InfoCard } from "@/components/ui/InfoCard";
 import { PredictionChart } from "@/components/ui/PredictionChart";
@@ -23,7 +23,7 @@ export default function Dashboard() {
     const [data, setData] = useState<PredictionResult | null>(null);
     const [error, setError] = useState('');
 
-    const handlePredict = async (searchSymbol: string = symbol) => {
+    const handlePredict = useCallback(async (searchSymbol: string = symbol) => {
         if (!searchSymbol) return;
 
         setLoading(true);
@@ -44,18 +44,18 @@ export default function Dashboard() {
 
             setData(result);
             setTraining(false);
-        } catch (err: any) {
+        } catch {
             setError('Failed to fetch prediction. Please check the symbol and try again.');
             setData(null);
         } finally {
             setLoading(false);
         }
-    };
+    }, [symbol]);
 
     // Initial load
     useEffect(() => {
         handlePredict('VCB');
-    }, []);
+    }, [handlePredict]);
 
     const chartData = data ? [
         ...(data.history || []).map(h => ({ ...h, price: h.price * 1000 })),

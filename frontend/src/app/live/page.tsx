@@ -7,10 +7,7 @@ import {
   ArrowUpCircle, 
   ArrowDownCircle, 
   Activity, 
-  Clock, 
   Zap,
-  TrendingUp,
-  Target
 } from 'lucide-react';
 
 interface TradingSignal {

@@ -13,6 +13,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Public } from '../auth/auth.decorators';
 import { JwtGuard } from '../auth/jwt.guard';
 import { BffService } from './bff.service';
+import { JwtPayload } from '../auth/domain/services/token.service.interface';
 
 interface PlaceOrderDto {
   symbol: string;
@@ -67,7 +68,7 @@ export class BffController {
   @Post('orders/place')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ orders: { ttl: 1000, limit: 5 } })
-  async placeOrder(@Body() dto: PlaceOrderDto, @Request() req: any) {
+  async placeOrder(@Body() dto: PlaceOrderDto, @Request() req: { user: JwtPayload }) {
     return this.bffService.placeOrder(dto, req.user.sub);
   }
 
@@ -76,7 +77,7 @@ export class BffController {
    * Returns current user's order history (protected)
    */
   @Get('portfolio')
-  async getPortfolio(@Request() req: any) {
+  async getPortfolio(@Request() req: { user: JwtPayload }) {
     return this.bffService.getPortfolio(req.user.sub);
   }
 }

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import { IMarketProvider } from '../../domain/services/market-provider.interface';
-import { MarketOverview } from '../../domain/entities/market-overview.entity';
+import { MarketOverview, IndexData, StockSnapshot } from '../../domain/entities/market-overview.entity';
 
 @Injectable()
 export class PythonMarketProvider implements IMarketProvider {
@@ -47,7 +47,13 @@ export class PythonMarketProvider implements IMarketProvider {
     throw new Error('Method not implemented.');
   }
 
-  private mapToEntity(data: any): MarketOverview {
+  private mapToEntity(data: {
+    vn_index?: IndexData;
+    hnx_index?: IndexData;
+    upcom_index?: IndexData;
+    top_gainers?: StockSnapshot[];
+    top_losers?: StockSnapshot[];
+  }): MarketOverview {
     return new MarketOverview(
       data.vn_index || { value: 0, change: 0, changePercent: 0, volume: 0 },
       data.hnx_index || { value: 0, change: 0, changePercent: 0, volume: 0 },

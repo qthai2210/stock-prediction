@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/services/api';
+import { api, MarketData } from '@/services/api';
 import { InfoCard } from "@/components/ui/InfoCard";
-import { Loader2, TrendingUp, TrendingDown, Minus, BarChart2, RefreshCw } from 'lucide-react';
+import { Loader2, BarChart2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MarketPage() {
     const [loading, setLoading] = useState(true);
-    const [data, setData] = useState<any | null>(null);
+    const [data, setData] = useState<MarketData | null>(null);
     const [error, setError] = useState('');
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [autoRefresh, setAutoRefresh] = useState(true);
@@ -43,7 +43,7 @@ export default function MarketPage() {
         return () => clearInterval(interval);
     }, [autoRefresh, fetchData]);
 
-    if (loading) {
+    if (loading && !data) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
@@ -51,7 +51,7 @@ export default function MarketPage() {
         );
     }
 
-    if (error) {
+    if (error && !data) {
         return (
             <div className="p-8 max-w-7xl mx-auto">
                 <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-center">
@@ -100,22 +100,35 @@ export default function MarketPage() {
 
             {/* Indices */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {(data?.indices || []).map((idx: any, i: number) => (
-                    <InfoCard
-                        key={idx.symbol}
-                        title={idx.symbol}
-                        value={new Intl.NumberFormat('vi-VN').format(idx.price || 0)}
-                        subValue={`${(idx.change_pct || 0) > 0 ? '+' : ''}${(idx.change_pct || 0).toFixed(2)}%`}
-                        trend={(idx.change_pct || 0) > 0 ? "up" : (idx.change_pct || 0) < 0 ? "down" : "neutral"}
-                        icon={BarChart2}
-                        delay={i * 100}
-                    />
-                ))}
+                <InfoCard
+                    title="VN-Index"
+                    value={new Intl.NumberFormat('vi-VN').format(data?.vn_index.value || 0)}
+                    subValue={`${(data?.vn_index.changePercent || 0) > 0 ? '+' : ''}${(data?.vn_index.changePercent || 0).toFixed(2)}%`}
+                    trend={(data?.vn_index.changePercent || 0) > 0 ? "up" : (data?.vn_index.changePercent || 0) < 0 ? "down" : "neutral"}
+                    icon={BarChart2}
+                    delay={0}
+                />
+                <InfoCard
+                    title="HNX-Index"
+                    value={new Intl.NumberFormat('vi-VN').format(data?.hnx_index.value || 0)}
+                    subValue={`${(data?.hnx_index.changePercent || 0) > 0 ? '+' : ''}${(data?.hnx_index.changePercent || 0).toFixed(2)}%`}
+                    trend={(data?.hnx_index.changePercent || 0) > 0 ? "up" : (data?.hnx_index.changePercent || 0) < 0 ? "down" : "neutral"}
+                    icon={BarChart2}
+                    delay={100}
+                />
+                <InfoCard
+                    title="UPCOM-Index"
+                    value={new Intl.NumberFormat('vi-VN').format(data?.upcom_index.value || 0)}
+                    subValue={`${(data?.upcom_index.changePercent || 0) > 0 ? '+' : ''}${(data?.upcom_index.changePercent || 0).toFixed(2)}%`}
+                    trend={(data?.upcom_index.changePercent || 0) > 0 ? "up" : (data?.upcom_index.changePercent || 0) < 0 ? "down" : "neutral"}
+                    icon={BarChart2}
+                    delay={200}
+                />
             </div>
 
-            {/* Top 30 Stocks */}
+            {/* Top Gainers */}
             <div className="glass-panel p-8 rounded-3xl">
-                <h3 className="text-xl font-bold text-white mb-6">Top Market Cap (VN30 Proxy)</h3>
+                <h3 className="text-xl font-bold text-white mb-6">Top Gainers</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -128,15 +141,15 @@ export default function MarketPage() {
                             </tr>
                         </thead>
                         <tbody className="text-sm">
-                            {(data?.top_stocks || []).map((stock: any, i: number) => (
+                            {(data?.top_gainers || []).map((stock) => (
                                 <tr key={stock.symbol} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                                     <td className="py-4 pl-4 font-bold text-white">{stock.symbol}</td>
                                     <td className="py-4 text-slate-200">{new Intl.NumberFormat('vi-VN').format((stock.price || 0) * 1000)}</td>
-                                    <td className={cn("py-4 font-medium", (stock.change || 0) > 0 ? "text-emerald-400" : (stock.change || 0) < 0 ? "text-rose-400" : "text-slate-400")}>
-                                        {(stock.change || 0) > 0 ? '+' : ''}{new Intl.NumberFormat('vi-VN').format((stock.change || 0) * 1000)}
+                                    <td className="py-4 font-medium text-emerald-400">
+                                        +{new Intl.NumberFormat('vi-VN').format((stock.change || 0) * 1000)}
                                     </td>
-                                    <td className={cn("py-4 font-medium", (stock.change_pct || 0) > 0 ? "text-emerald-400" : (stock.change_pct || 0) < 0 ? "text-rose-400" : "text-slate-400")}>
-                                        {(stock.change_pct || 0) > 0 ? '+' : ''}{(stock.change_pct || 0).toFixed(2)}%
+                                    <td className="py-4 font-medium text-emerald-400">
+                                        +{(stock.changePercent || 0).toFixed(2)}%
                                     </td>
                                     <td className="py-4 pr-4 text-right text-slate-400">
                                         {new Intl.NumberFormat('vi-VN').format(stock.volume || 0)}
