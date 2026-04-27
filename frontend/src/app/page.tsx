@@ -131,7 +131,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <InfoCard
                             title="Current Price"
-                            value={((data.latest_close || 0) * 1000).toLocaleString()}
+                            value={((data?.latest_close ?? 0) * 1000).toLocaleString()}
                             subValue="VND"
                             trend="neutral"
                             icon={DollarSign}
@@ -139,8 +139,8 @@ export default function Dashboard() {
                         />
                         <InfoCard
                             title="AI Forecast (T+1)"
-                            value={Math.round((data.prediction || 0) * 1000).toLocaleString()}
-                            subValue={`${isUp ? '+' : ''}${(data.change_pct || 0).toFixed(2)}%`}
+                            value={Math.round((data?.prediction ?? 0) * 1000).toLocaleString()}
+                            subValue={`${isUp ? '+' : ''}${(data?.change_pct ?? 0).toFixed(2)}%`}
                             trend={isUp ? "up" : "down"}
                             icon={TrendingUp}
                             delay={100}
