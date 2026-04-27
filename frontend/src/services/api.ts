@@ -53,6 +53,21 @@ export interface MarketData {
     updatedAt: string;
 }
 
+export interface SignalLog {
+    id: number | string;
+    symbol: string;
+    type: 'BUY' | 'SELL' | 'HOLD';
+    strategy: string;
+    priceAtTime: number;
+    targetPrice: number;
+    confidence: number;
+    status: 'ACTIVE' | 'SUCCESS' | 'FAIL' | 'EXPIRED';
+    createdAt: string;
+    actualPrice?: number;
+    profitPct?: number;
+    closedAt?: string;
+}
+
 export const api = {
     async getPrediction(symbol: string): Promise<PredictionResult> {
         try {
@@ -99,7 +114,7 @@ export const api = {
             winRate: string | number;
         };
         strategyStats: Record<string, { total: number; success: number; profit: number }>;
-        recentSignals: any[];
+        recentSignals: SignalLog[];
     }> {
         try {
             const response = await fetch(`${API_URL}/signals/stats`);

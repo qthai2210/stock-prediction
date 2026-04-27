@@ -12,22 +12,21 @@ interface StrategyStat {
   profit: number;
 }
 
-interface SignalLog {
-  id: string;
-  strategy: string;
-  symbol: string;
-  type: 'BUY' | 'SELL';
-  status: 'SUCCESS' | 'FAIL' | 'PENDING';
-  profitPct?: number;
-}
-
 interface PerformanceStats {
   summary: {
     total: number;
     winRate: number | string;
   };
   strategyStats: Record<string, StrategyStat>;
-  recentSignals: any[];
+  recentSignals: {
+    id: number | string;
+    symbol: string;
+    type: string;
+    strategy: string;
+    status: string;
+    priceAtTime: number;
+    profitPct?: number;
+  }[];
 }
 
 interface StatsProps {
