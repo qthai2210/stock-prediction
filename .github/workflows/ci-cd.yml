@@ -5,13 +5,23 @@ on:
     branches: [ main, dev ]
   pull_request:
     branches: [ main, dev ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Job to detect changes in specific directories
+  # 1. CI: Detect Changes
   changes:
     runs-on: ubuntu-latest
     outputs:
-      backend_ai: ${{ steps.filter.outputs.backend_ai }}
+      backend: ${{ steps.filter.outputs.backend }}
+      ai: ${{ steps.filter.outputs.ai }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -19,36 +29,25 @@ jobs:
         id: filter
         with:
           filters: |
-            backend_ai:
+            backend:
               - 'backend/**'
+              - '.github/workflows/**'
+              - 'Dockerfile'
+            ai:
               - 'ai/**'
               - '.github/workflows/**'
             frontend:
               - 'frontend/**'
               - '.github/workflows/**'
+              - 'Dockerfile.frontend'
 
-  test-backend-ai:
+  # 2. CI: Test & Lint Backend
+  test-backend:
     needs: changes
-    if: ${{ needs.changes.outputs.backend_ai == 'true' }}
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install Python Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f ai/requirements-training.txt ]; then pip install -r ai/requirements-training.txt; fi
-
-    - name: Test AI Scripts
-      run: |
-        # Run python unit tests if available
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
-        python ai/test_model.py
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -57,17 +56,48 @@ jobs:
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
 
-    - name: Install Backend Dependencies
-      run: |
-        cd backend
-        npm ci
+    - name: Install Dependencies
+      working-directory: backend
+      run: npm ci
 
-    - name: Run Backend Tests
-      run: |
-        cd backend
-        npm run test
+    - name: Generate Prisma Client
+      working-directory: backend
+      run: npx prisma generate
 
-  build-frontend:
+    - name: Lint
+      working-directory: backend
+      run: npm run lint
+
+    - name: Run Tests
+      working-directory: backend
+      run: npm run test
+
+  # 3. CI: Test & Lint AI
+  test-ai:
+    needs: changes
+    if: ${{ needs.changes.outputs.ai == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f ai/requirements-training.txt ]; then pip install -r ai/requirements-training.txt; fi
+
+    - name: Run AI Tests
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        if [ -f ai/test_model.py ]; then python ai/test_model.py; fi
+
+  # 4. CI: Test & Lint Frontend
+  test-frontend:
     needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
@@ -81,12 +111,108 @@ jobs:
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
 
-    - name: Install Frontend Dependencies
-      run: |
-        cd frontend
-        npm ci
+    - name: Install Dependencies
+      working-directory: frontend
+      run: npm ci
+
+    - name: Lint
+      working-directory: frontend
+      run: npm run lint
 
     - name: Build Frontend
-      run: |
-        cd frontend
-        npm run build
+      working-directory: frontend
+      run: npm run build
+
+  # 5. CD: Build and Push Docker Images (Main branch only)
+  build-and-push:
+    needs: [test-backend, test-ai, test-frontend]
+    if: |
+      always() &&
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/main' &&
+      (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
+      (needs.test-ai.result == 'success' || needs.test-ai.result == 'skipped') &&
+      (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: |
+          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}
+
+      # Build and push Backend
+      - name: Build and push Backend
+        if: ${{ needs.changes.outputs.backend == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/backend:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Build and push AI Worker
+      - name: Build and push AI Worker
+        if: ${{ needs.changes.outputs.ai == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ai
+          file: ./ai/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/ai-worker:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Build and push Frontend
+      - name: Build and push Frontend
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/frontend:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # 6. CD: Deploy (requires setup)
+  deploy:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lowercase image name
+        run: |
+          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          envs: REGISTRY,IMAGE_NAME_LOWER
+          script: |
+            cd /app/stock-prediction
+            export REGISTRY=${REGISTRY}
+            export IMAGE_NAME=${IMAGE_NAME_LOWER}
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
