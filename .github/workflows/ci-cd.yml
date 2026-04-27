@@ -73,6 +73,9 @@ jobs:
       needs.changes.outputs.backend == 'true' &&
       (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
       github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/template-docker.yml
     with:
       image-suffix: 'backend'
@@ -87,6 +90,9 @@ jobs:
       needs.changes.outputs.ai == 'true' &&
       (needs.test-ai.result == 'success' || needs.test-ai.result == 'skipped') &&
       github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/template-docker.yml
     with:
       image-suffix: 'ai-worker'
@@ -101,6 +107,9 @@ jobs:
       needs.changes.outputs.frontend == 'true' &&
       (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
       github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/template-docker.yml
     with:
       image-suffix: 'frontend'
