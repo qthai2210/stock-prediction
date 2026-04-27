@@ -16,18 +16,18 @@ export class PythonMarketProvider implements IMarketProvider {
       let dataString = '';
       let errorString = '';
 
-      pythonProcess.stdout.on('data', (data) => {
+      pythonProcess.stdout.on('data', (data: Buffer) => {
         dataString += data.toString();
       });
 
-      pythonProcess.stderr.on('data', (data) => {
+      pythonProcess.stderr.on('data', (data: Buffer) => {
         errorString += data.toString();
       });
 
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
           this.logger.error(`Python script exited with code ${code}: ${errorString}`);
-          reject(`Market analysis failed: ${errorString}`);
+          reject(new Error(`Market analysis failed: ${errorString}`));
           return;
         }
 
@@ -42,7 +42,7 @@ export class PythonMarketProvider implements IMarketProvider {
           resolve(this.mapToEntity(jsonResult));
         } catch (error) {
           this.logger.error(`Failed to parse JSON: ${error}, Data: ${dataString}`);
-          reject('Failed to parse market results');
+          reject(new Error('Failed to parse market results'));
         }
       });
     });

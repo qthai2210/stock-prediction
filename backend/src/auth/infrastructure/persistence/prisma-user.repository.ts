@@ -37,7 +37,7 @@ export class PrismaUserRepository implements IUserRepository {
       email: string;
       role: string;
       createdAt: Date;
-      balance: any;
+      balance: number | string;
       passwordHash: string | null;
     });
   }
@@ -47,7 +47,7 @@ export class PrismaUserRepository implements IUserRepository {
     email: string; 
     role: string; 
     createdAt: Date; 
-    balance: any; 
+    balance: number | string; 
     passwordHash: string | null;
   }): User {
     return new User(

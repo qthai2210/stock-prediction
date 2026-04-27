@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { AuthService, JwtPayload } from './auth.service';
+import { AuthService } from './auth.service';
 
 // Metadata key to mark routes as public (skip JWT check)
 export const IS_PUBLIC_KEY = 'isPublic';
@@ -16,9 +16,9 @@ export class JwtGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly reflector: Reflector,
-  ) {}
+  ) { }
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     // Allow routes decorated with @Public()
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),

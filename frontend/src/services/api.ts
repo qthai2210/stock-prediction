@@ -103,7 +103,12 @@ export const api = {
             if (!response.ok) {
                 throw new Error('Failed to fetch signal stats');
             }
-            return await response.json();
+            const data = await response.json();
+            return data as {
+                total_active: number;
+                avg_confidence: number;
+                top_strategy: string;
+            };
         } catch (error) {
             console.error('API Error:', error);
             throw error;

@@ -24,7 +24,7 @@ export class BffService {
     return this.getSignalPanelUseCase.execute(symbol);
   }
 
-  async placeOrder(dto: any, userId: number) {
+  async placeOrder(dto: Omit<PlaceOrderInput, 'userId'>, userId: number) {
     const input: PlaceOrderInput = { ...dto, userId };
     return this.placeOrderUseCase.execute(input);
   }

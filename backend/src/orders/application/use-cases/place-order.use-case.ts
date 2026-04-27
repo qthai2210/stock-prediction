@@ -28,7 +28,7 @@ export class PlaceOrderUseCase {
     private readonly prisma: PrismaService,
   ) {}
 
-  async execute(input: PlaceOrderInput): Promise<any> {
+  async execute(input: PlaceOrderInput): Promise<Order> {
     this.validate(input);
 
     return await this.prisma.$transaction(async (tx) => {
