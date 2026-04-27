@@ -4,11 +4,11 @@ import { MarketOverview } from './domain/entities/market-overview.entity';
 
 @Injectable()
 export class MarketService {
-    constructor(
-        private readonly getMarketOverviewUseCase: GetMarketOverviewUseCase,
-    ) {}
+  constructor(
+    private readonly getMarketOverviewUseCase: GetMarketOverviewUseCase,
+  ) {}
 
-    async getMarketOverview(): Promise<MarketOverview> {
-        return this.getMarketOverviewUseCase.execute();
-    }
+  async getMarketOverview(): Promise<MarketOverview> {
+    return this.getMarketOverviewUseCase.execute();
+  }
 }

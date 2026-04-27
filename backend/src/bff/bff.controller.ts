@@ -68,7 +68,10 @@ export class BffController {
   @Post('orders/place')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ orders: { ttl: 1000, limit: 5 } })
-  async placeOrder(@Body() dto: PlaceOrderDto, @Request() req: { user: JwtPayload }) {
+  async placeOrder(
+    @Body() dto: PlaceOrderDto,
+    @Request() req: { user: JwtPayload },
+  ) {
     return this.bffService.placeOrder(dto, req.user.sub);
   }
 

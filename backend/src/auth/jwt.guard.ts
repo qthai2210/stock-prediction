@@ -16,7 +16,7 @@ export class JwtGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly reflector: Reflector,
-  ) { }
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     // Allow routes decorated with @Public()

@@ -17,7 +17,9 @@ export class PrismaUserRepository implements IUserRepository {
     return prismaUser ? this.mapToEntity(prismaUser) : null;
   }
 
-  async save(data: Partial<User> & { passwordHash: string; email: string }): Promise<User> {
+  async save(
+    data: Partial<User> & { passwordHash: string; email: string },
+  ): Promise<User> {
     const prismaUser = await this.prisma.user.upsert({
       where: { email: data.email },
       update: {
@@ -32,22 +34,24 @@ export class PrismaUserRepository implements IUserRepository {
         balance: data.balance ?? 100000000,
       },
     });
-    return this.mapToEntity(prismaUser as {
-      id: number;
-      email: string;
-      role: string;
-      createdAt: Date;
-      balance: number | string;
-      passwordHash: string | null;
-    });
+    return this.mapToEntity(
+      prismaUser as {
+        id: number;
+        email: string;
+        role: string;
+        createdAt: Date;
+        balance: number | string;
+        passwordHash: string | null;
+      },
+    );
   }
 
-  private mapToEntity(prismaUser: { 
-    id: number; 
-    email: string; 
-    role: string; 
-    createdAt: Date; 
-    balance: number | string; 
+  private mapToEntity(prismaUser: {
+    id: number;
+    email: string;
+    role: string;
+    createdAt: Date;
+    balance: number | string;
     passwordHash: string | null;
   }): User {
     return new User(

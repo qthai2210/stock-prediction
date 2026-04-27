@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import { IMarketProvider } from '../../domain/services/market-provider.interface';
-import { MarketOverview, IndexData, StockSnapshot } from '../../domain/entities/market-overview.entity';
+import {
+  MarketOverview,
+  IndexData,
+  StockSnapshot,
+} from '../../domain/entities/market-overview.entity';
 
 @Injectable()
 export class PythonMarketProvider implements IMarketProvider {
@@ -10,7 +14,12 @@ export class PythonMarketProvider implements IMarketProvider {
 
   async getMarketOverview(): Promise<MarketOverview> {
     return new Promise((resolve, reject) => {
-      const pythonScriptPath = path.join(process.cwd(), 'src', 'worker', 'worker.py');
+      const pythonScriptPath = path.join(
+        process.cwd(),
+        'src',
+        'worker',
+        'worker.py',
+      );
       const pythonProcess = spawn('python', [pythonScriptPath, 'MARKET']);
 
       let dataString = '';
@@ -26,7 +35,9 @@ export class PythonMarketProvider implements IMarketProvider {
 
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
-          this.logger.error(`Python script exited with code ${code}: ${errorString}`);
+          this.logger.error(
+            `Python script exited with code ${code}: ${errorString}`,
+          );
           reject(new Error(`Market analysis failed: ${errorString}`));
           return;
         }
@@ -41,14 +52,17 @@ export class PythonMarketProvider implements IMarketProvider {
           };
           resolve(this.mapToEntity(jsonResult));
         } catch (error) {
-          this.logger.error(`Failed to parse JSON: ${error}, Data: ${dataString}`);
+          this.logger.error(
+            `Failed to parse JSON: ${error}, Data: ${dataString}`,
+          );
           reject(new Error('Failed to parse market results'));
         }
       });
     });
   }
 
-  getLiveQuote(_symbol: string): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getLiveQuote(_symbol: string): Promise<unknown> {
     // Implementation for fetching specific stock quote
     return Promise.reject(new Error('Method not implemented.'));
   }

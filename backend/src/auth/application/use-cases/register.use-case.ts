@@ -34,7 +34,11 @@ export class RegisterUseCase {
       role: UserRole.USER,
     });
 
-    const token = this.tokenService.sign({ sub: user.id, email: user.email, role: user.role });
+    const token = this.tokenService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       user: {

@@ -19,11 +19,13 @@ export class EvaluateSignalAccuracyUseCase {
 
     for (const signal of activeSignals) {
       try {
-        const marketData = await this.getPredictionUseCase.execute(signal.symbol);
+        const marketData = await this.getPredictionUseCase.execute(
+          signal.symbol,
+        );
         const currentPrice = marketData.latest_close;
 
         let status: SignalStatus = SignalStatus.ACTIVE;
-        let profitPct = signal.calculateProfit(currentPrice);
+        const profitPct = signal.calculateProfit(currentPrice);
 
         if (signal.type === SignalType.BUY) {
           if (currentPrice >= signal.targetPrice) status = SignalStatus.SUCCESS;
@@ -41,8 +43,10 @@ export class EvaluateSignalAccuracyUseCase {
             closedAt: new Date(),
           });
         }
-      } catch (e) {
-        this.logger.error(`Error evaluating signal ${signal.id}: ${e.message}`);
+      } catch (e: unknown) {
+        this.logger.error(
+          `Error evaluating signal ${signal.id}: ${e instanceof Error ? e.message : String(e)}`,
+        );
       }
     }
   }

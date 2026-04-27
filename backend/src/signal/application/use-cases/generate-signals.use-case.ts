@@ -1,8 +1,19 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ISignalRepository } from '../../domain/repositories/signal.repository.interface';
 import { IBroadcastService } from '../../domain/services/broadcast.service.interface';
-import { Signal, SignalType, SignalStatus } from '../../domain/entities/signal.entity';
+import {
+  Signal,
+  SignalType,
+  SignalStatus,
+} from '../../domain/entities/signal.entity';
 import { GetPredictionUseCase } from '../../../prediction/application/use-cases/get-prediction.use-case';
+
+interface StrategyResult {
+  strategy: string;
+  type: string;
+  confidence: number;
+  target?: number;
+}
 
 @Injectable()
 export class GenerateSignalsUseCase {
@@ -19,19 +30,33 @@ export class GenerateSignalsUseCase {
 
   async execute() {
     this.logger.log('🚀 Generating multi-strategy signals...');
-    
+
     for (const symbol of this.watchList) {
       try {
         const data = await this.getPredictionUseCase.execute(symbol);
         if (!data || !data.indicators) continue;
 
-        const { latest_close: price, prediction, indicators, top_features } = data;
-        const strategies = [
-          this.checkTechnicalBounce(symbol, price, prediction, indicators),
-          this.checkAiTrend(symbol, price, prediction, top_features),
-          this.checkOverboughtOversold(symbol, price, indicators),
-          this.checkBbBreakout(symbol, price, indicators),
-          this.checkMaCrossover(symbol, price, indicators)
+        const {
+          latest_close: price,
+          prediction,
+          indicators,
+          top_features,
+        } = data;
+
+        const priceNum = Number(price);
+        const predNum = Number(prediction);
+
+        const strategies: StrategyResult[] = [
+          this.checkTechnicalBounce(symbol, priceNum, predNum, indicators),
+          this.checkAiTrend(
+            symbol,
+            priceNum,
+            predNum,
+            top_features as { importance: number }[],
+          ),
+          this.checkOverboughtOversold(symbol, priceNum, indicators),
+          this.checkBbBreakout(symbol, priceNum, indicators),
+          this.checkMaCrossover(symbol, priceNum, indicators),
         ];
 
         for (const strategyResult of strategies) {
@@ -40,55 +65,87 @@ export class GenerateSignalsUseCase {
               symbol,
               type: strategyResult.type as SignalType,
               strategy: strategyResult.strategy,
-              priceAtTime: price,
-              targetPrice: (strategyResult as any).target || prediction,
+              priceAtTime: priceNum,
+              targetPrice: strategyResult.target || predNum,
               confidence: strategyResult.confidence,
-              status: SignalStatus.ACTIVE
+              status: SignalStatus.ACTIVE,
             };
 
             const newSignal = await this.signalRepository.save(signalData);
 
             this.broadcastService.broadcastSignal({
               ...newSignal,
-              message: `[${strategyResult.strategy}] 🔥 ${strategyResult.type} ${symbol} @ ${price}`
-            } as any);
+              message: `[${strategyResult.strategy}] 🔥 ${strategyResult.type} ${symbol} @ ${priceNum}`,
+            } as Signal & { message: string });
           }
         }
-      } catch (error) {
-        this.logger.error(`Error generating signals for ${symbol}: ${error.message}`);
+      } catch (error: unknown) {
+        this.logger.error(
+          `Error generating signals for ${symbol}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
   }
 
   // --- Strategy Methods (Extracted from old service) ---
-  private checkTechnicalBounce(symbol, price, prediction, indicators) {
+  public checkTechnicalBounce(
+    symbol: string,
+    price: number,
+    prediction: number,
+    indicators: Record<string, number>,
+  ): StrategyResult {
     const { rsi, macd, macd_signal, volume_ratio } = indicators;
     let type = 'HOLD';
-    const isBullish = rsi < 40 && macd > macd_signal && prediction > price && volume_ratio > 1.2;
+    const isBullish =
+      rsi < 40 &&
+      macd > macd_signal &&
+      prediction > price &&
+      volume_ratio > 1.2;
     const isBearish = rsi > 60 && macd < macd_signal && prediction < price;
     if (isBullish) type = 'BUY';
     else if (isBearish) type = 'SELL';
     return { strategy: 'OPTIMIZED_BOUNCE', type, confidence: 80 };
   }
 
-  private checkAiTrend(symbol, price, prediction, top_features) {
+  public checkAiTrend(
+    symbol: string,
+    price: number,
+    prediction: number,
+    top_features: { importance: number }[],
+  ): StrategyResult {
     const changePct = ((prediction - price) / price) * 100;
     let type = 'HOLD';
-    const isHighConfidence = top_features && top_features.length > 0 && top_features[0].importance > 0.15;
+    const isHighConfidence =
+      top_features &&
+      top_features.length > 0 &&
+      top_features[0].importance > 0.15;
     if (isHighConfidence && changePct > 4) type = 'BUY';
     if (isHighConfidence && changePct < -4) type = 'SELL';
     return { strategy: 'AI_HIGH_CONVICTION', type, confidence: 90 };
   }
 
-  private checkOverboughtOversold(symbol, price, indicators) {
+  public checkOverboughtOversold(
+    symbol: string,
+    price: number,
+    indicators: Record<string, number>,
+  ): StrategyResult {
     const { rsi, volume_ratio } = indicators;
     let type = 'HOLD';
     if (rsi < 25 && volume_ratio > 1.5) type = 'BUY';
     if (rsi > 75 && volume_ratio > 1.5) type = 'SELL';
-    return { strategy: 'VN_EXTREME_RSI', type, confidence: 70, target: type === 'BUY' ? price * 1.07 : price * 0.93 };
+    return {
+      strategy: 'VN_EXTREME_RSI',
+      type,
+      confidence: 70,
+      target: type === 'BUY' ? price * 1.07 : price * 0.93,
+    };
   }
 
-  private checkBbBreakout(symbol, price, indicators) {
+  public checkBbBreakout(
+    symbol: string,
+    price: number,
+    indicators: Record<string, number>,
+  ): StrategyResult {
     const { bb_upper, bb_lower, volume_ratio } = indicators;
     let type = 'HOLD';
     if (price > bb_upper && volume_ratio > 1.8) type = 'BUY';
@@ -96,7 +153,11 @@ export class GenerateSignalsUseCase {
     return { strategy: 'SMART_BB_BREAKOUT', type, confidence: 75 };
   }
 
-  private checkMaCrossover(symbol, price, indicators) {
+  public checkMaCrossover(
+    symbol: string,
+    price: number,
+    indicators: Record<string, number>,
+  ): StrategyResult {
     const { sma20, sma50, ema12, ema26 } = indicators;
     let type = 'HOLD';
     const goldenCross = ema12 > ema26 && sma20 > sma50;

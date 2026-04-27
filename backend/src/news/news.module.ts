@@ -8,16 +8,16 @@ import { GetNewsSentimentUseCase } from './application/use-cases/get-news-sentim
 import { RabbitMqModule } from '../infrastructure/rabbitmq/rabbitmq.module';
 
 @Module({
-    imports: [RabbitMqModule],
-    controllers: [NewsController],
-    providers: [
-        NewsService,
-        GetNewsSentimentUseCase,
-        {
-            provide: INewsProvider,
-            useClass: PythonNewsProvider,
-        },
-    ],
-    exports: [NewsService, GetNewsSentimentUseCase],
+  imports: [RabbitMqModule],
+  controllers: [NewsController],
+  providers: [
+    NewsService,
+    GetNewsSentimentUseCase,
+    {
+      provide: INewsProvider,
+      useClass: PythonNewsProvider,
+    },
+  ],
+  exports: [NewsService, GetNewsSentimentUseCase],
 })
-export class NewsModule { }
+export class NewsModule {}

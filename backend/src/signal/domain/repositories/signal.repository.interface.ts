@@ -1,4 +1,4 @@
-import { Signal, SignalStatus } from '../entities/signal.entity';
+import { Signal } from '../entities/signal.entity';
 
 export interface ISignalRepository {
   save(signal: Partial<Signal>): Promise<Signal>;

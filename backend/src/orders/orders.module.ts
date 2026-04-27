@@ -24,6 +24,11 @@ import { GetPortfolioUseCase } from './application/use-cases/get-portfolio.use-c
       useClass: PrismaPositionRepository,
     },
   ],
-  exports: [PlaceOrderUseCase, GetPortfolioUseCase, IOrderRepository, IPositionRepository],
+  exports: [
+    PlaceOrderUseCase,
+    GetPortfolioUseCase,
+    IOrderRepository,
+    IPositionRepository,
+  ],
 })
 export class OrdersModule {}

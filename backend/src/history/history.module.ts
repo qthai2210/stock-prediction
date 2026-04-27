@@ -8,9 +8,6 @@ import { GetHistoricalPredictionsUseCase } from './application/use-cases/get-his
 @Module({
   imports: [SignalModule, PredictionModule],
   controllers: [HistoryController],
-  providers: [
-    GetHistoricalSignalsUseCase,
-    GetHistoricalPredictionsUseCase,
-  ],
+  providers: [GetHistoricalSignalsUseCase, GetHistoricalPredictionsUseCase],
 })
 export class HistoryModule {}

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { RegisterUseCase, RegisterInput } from './application/use-cases/register.use-case';
-import { LoginUseCase, LoginInput } from './application/use-cases/login.use-case';
+import {
+  RegisterUseCase,
+  RegisterInput,
+} from './application/use-cases/register.use-case';
+import {
+  LoginUseCase,
+  LoginInput,
+} from './application/use-cases/login.use-case';
 import { ValidateTokenUseCase } from './application/use-cases/validate-token.use-case';
 import { JwtPayload } from './domain/services/token.service.interface';
 

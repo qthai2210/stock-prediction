@@ -12,21 +12,21 @@ import { GetPredictionUseCase } from './application/use-cases/get-prediction.use
 import { RunBacktestUseCase } from './application/use-cases/run-backtest.use-case';
 
 @Module({
-    imports: [QueueModule, PrismaModule, RabbitMqModule],
-    controllers: [PredictionController],
-    providers: [
-        PredictionService,
-        GetPredictionUseCase,
-        RunBacktestUseCase,
-        {
-            provide: IPredictionRepository,
-            useClass: PrismaPredictionRepository,
-        },
-        {
-            provide: IPredictionQueue,
-            useClass: RabbitMqPredictionQueue,
-        },
-    ],
-    exports: [PredictionService, GetPredictionUseCase, RunBacktestUseCase],
+  imports: [QueueModule, PrismaModule, RabbitMqModule],
+  controllers: [PredictionController],
+  providers: [
+    PredictionService,
+    GetPredictionUseCase,
+    RunBacktestUseCase,
+    {
+      provide: IPredictionRepository,
+      useClass: PrismaPredictionRepository,
+    },
+    {
+      provide: IPredictionQueue,
+      useClass: RabbitMqPredictionQueue,
+    },
+  ],
+  exports: [PredictionService, GetPredictionUseCase, RunBacktestUseCase],
 })
-export class PredictionModule { }
+export class PredictionModule {}

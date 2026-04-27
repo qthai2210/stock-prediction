@@ -14,6 +14,12 @@ export class Position {
     avgPrice: number;
     userId: number;
   }): Position {
-    return new Position(null, data.symbol, data.quantity, data.avgPrice, data.userId);
+    return new Position(
+      null,
+      data.symbol,
+      data.quantity,
+      data.avgPrice,
+      data.userId,
+    );
   }
 }

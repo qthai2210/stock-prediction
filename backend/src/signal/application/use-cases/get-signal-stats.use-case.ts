@@ -12,8 +12,11 @@ export class GetSignalStatsUseCase {
   async execute() {
     const closedSignals = await this.signalRepository.findAllClosed();
 
-    const strategyStats = {};
-    closedSignals.forEach(s => {
+    const strategyStats: Record<
+      string,
+      { total: number; success: number; profit: number }
+    > = {};
+    closedSignals.forEach((s) => {
       if (!strategyStats[s.strategy]) {
         strategyStats[s.strategy] = { total: 0, success: 0, profit: 0 };
       }
@@ -28,12 +31,20 @@ export class GetSignalStatsUseCase {
     return {
       summary: {
         total: closedSignals.length,
-        winRate: closedSignals.length > 0 
-          ? (closedSignals.filter(s => s.status === SignalStatus.SUCCESS).length / (closedSignals.filter(s => s.status !== SignalStatus.EXPIRED).length || 1) * 100).toFixed(2) 
-          : 0
+        winRate:
+          closedSignals.length > 0
+            ? (
+                (closedSignals.filter((s) => s.status === SignalStatus.SUCCESS)
+                  .length /
+                  (closedSignals.filter(
+                    (s) => s.status !== SignalStatus.EXPIRED,
+                  ).length || 1)) *
+                100
+              ).toFixed(2)
+            : 0,
       },
       strategyStats,
-      recentSignals
+      recentSignals,
     };
   }
 }

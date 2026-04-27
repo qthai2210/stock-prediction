@@ -11,9 +11,16 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { JwtGuard } from '../auth/jwt.guard';
-import { PlaceOrderUseCase, PlaceOrderInput } from './application/use-cases/place-order.use-case';
-import { GetPortfolioUseCase } from './application/use-cases/get-portfolio.use-case';
+import {
+  PlaceOrderUseCase,
+  PlaceOrderInput,
+} from './application/use-cases/place-order.use-case';
+import {
+  GetPortfolioUseCase,
+  PortfolioResult,
+} from './application/use-cases/get-portfolio.use-case';
 import { IOrderRepository } from './domain/repositories/order.repository.interface';
+import { Order } from './domain/entities/order.entity';
 
 interface PlaceOrderDto {
   symbol: string;
@@ -22,6 +29,13 @@ interface PlaceOrderDto {
   quantity: number;
   price?: number;
   stopPrice?: number;
+}
+
+interface RequestWithUser {
+  user: {
+    sub: number;
+    email: string;
+  };
 }
 
 @Controller('orders')
@@ -37,7 +51,10 @@ export class OrdersController {
   @Post('place')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ orders: { ttl: 1000, limit: 5 } })
-  async placeOrder(@Body() dto: PlaceOrderDto, @Request() req: any) {
+  async placeOrder(
+    @Body() dto: PlaceOrderDto,
+    @Request() req: RequestWithUser,
+  ): Promise<Order> {
     const input: PlaceOrderInput = {
       ...dto,
       price: dto.price ?? 0,
@@ -47,12 +64,14 @@ export class OrdersController {
   }
 
   @Get('my')
-  async getMyOrders(@Request() req: any) {
+  async getMyOrders(@Request() req: RequestWithUser): Promise<Order[]> {
     return this.orderRepository.findByUser(req.user.sub);
   }
 
   @Get('portfolio')
-  async getPortfolio(@Request() req: any) {
+  async getPortfolio(
+    @Request() req: RequestWithUser,
+  ): Promise<PortfolioResult> {
     return this.getPortfolioUseCase.execute(req.user.sub);
   }
 }

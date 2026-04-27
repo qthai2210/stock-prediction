@@ -1,4 +1,8 @@
-import { SetMetadata, createParamDecorator, ExecutionContext } from '@nestjs/common';
+import {
+  SetMetadata,
+  createParamDecorator,
+  ExecutionContext,
+} from '@nestjs/common';
 import { IS_PUBLIC_KEY } from './jwt.guard';
 import { JwtPayload } from './domain/services/token.service.interface';
 

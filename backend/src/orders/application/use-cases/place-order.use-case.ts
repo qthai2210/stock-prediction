@@ -1,8 +1,18 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { IOrderRepository } from '../../domain/repositories/order.repository.interface';
 import { IPositionRepository } from '../../domain/repositories/position.repository.interface';
 import { IUserRepository } from '../../../auth/domain/repositories/user.repository.interface';
-import { Order, OrderStatus, OrderSide, OrderType } from '../../domain/entities/order.entity';
+import {
+  Order,
+  OrderStatus,
+  OrderSide,
+  OrderType,
+} from '../../domain/entities/order.entity';
 import { Position } from '../../domain/entities/position.entity';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -53,48 +63,91 @@ export class PlaceOrderUseCase {
 
         if (input.type === 'BUY') {
           if (user.balance < totalCost) {
-            throw new BadRequestException('Insufficient balance for this trade');
+            throw new BadRequestException(
+              'Insufficient balance for this trade',
+            );
           }
-          
+
           // Update User Balance
-          await this.userRepository.save({
-            ...user,
-            balance: user.balance - totalCost
-          }, tx);
+          await this.userRepository.save(
+            {
+              ...user,
+              balance: user.balance - totalCost,
+            },
+            tx,
+          );
 
           // Update Position
-          const existingPos = await this.positionRepository.findByUserAndSymbol(input.userId, input.symbol);
+          const existingPos = await this.positionRepository.findByUserAndSymbol(
+            input.userId,
+            input.symbol,
+          );
           if (existingPos) {
             const newQuantity = existingPos.quantity + input.quantity;
-            const newAvgPrice = ((existingPos.avgPrice * existingPos.quantity) + totalCost) / newQuantity;
-            await this.positionRepository.save(new Position(existingPos.id, input.symbol, newQuantity, newAvgPrice, input.userId), tx);
+            const newAvgPrice =
+              (existingPos.avgPrice * existingPos.quantity + totalCost) /
+              newQuantity;
+            await this.positionRepository.save(
+              new Position(
+                existingPos.id,
+                input.symbol,
+                newQuantity,
+                newAvgPrice,
+                input.userId,
+              ),
+              tx,
+            );
           } else {
-            await this.positionRepository.save(Position.create({
-              symbol: input.symbol,
-              quantity: input.quantity,
-              avgPrice: input.price,
-              userId: input.userId
-            }), tx);
+            await this.positionRepository.save(
+              Position.create({
+                symbol: input.symbol,
+                quantity: input.quantity,
+                avgPrice: input.price,
+                userId: input.userId,
+              }),
+              tx,
+            );
           }
         } else {
           // SELL Logic
-          const existingPos = await this.positionRepository.findByUserAndSymbol(input.userId, input.symbol);
+          const existingPos = await this.positionRepository.findByUserAndSymbol(
+            input.userId,
+            input.symbol,
+          );
           if (!existingPos || existingPos.quantity < input.quantity) {
-            throw new BadRequestException('Insufficient stock quantity to sell');
+            throw new BadRequestException(
+              'Insufficient stock quantity to sell',
+            );
           }
 
           // Update User Balance
-          await this.userRepository.save({
-            ...user,
-            balance: (user.balance || 0) + totalCost
-          }, tx);
+          await this.userRepository.save(
+            {
+              ...user,
+              balance: (user.balance || 0) + totalCost,
+            },
+            tx,
+          );
 
           // Update Position
           const newQuantity = existingPos.quantity - input.quantity;
           if (newQuantity === 0) {
-            await this.positionRepository.delete(input.userId, input.symbol, tx);
+            await this.positionRepository.delete(
+              input.userId,
+              input.symbol,
+              tx,
+            );
           } else {
-            await this.positionRepository.save(new Position(existingPos.id, input.symbol, newQuantity, existingPos.avgPrice, input.userId), tx);
+            await this.positionRepository.save(
+              new Position(
+                existingPos.id,
+                input.symbol,
+                newQuantity,
+                existingPos.avgPrice,
+                input.userId,
+              ),
+              tx,
+            );
           }
         }
       }
@@ -104,8 +157,13 @@ export class PlaceOrderUseCase {
   }
 
   private validate(input: PlaceOrderInput) {
-    if (!input.symbol?.trim()) throw new BadRequestException('Symbol is required');
-    if (input.quantity <= 0) throw new BadRequestException('Quantity must be positive');
-    if (!input.price || input.price <= 0) throw new BadRequestException('Valid price is required for paper trading');
+    if (!input.symbol?.trim())
+      throw new BadRequestException('Symbol is required');
+    if (input.quantity <= 0)
+      throw new BadRequestException('Quantity must be positive');
+    if (!input.price || input.price <= 0)
+      throw new BadRequestException(
+        'Valid price is required for paper trading',
+      );
   }
 }

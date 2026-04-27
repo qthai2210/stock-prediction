@@ -43,7 +43,7 @@ export class Order {
     userId: number;
   }): Partial<Order> & { userId: number } {
     const isMarket = params.orderType === OrderType.MARKET;
-    
+
     return {
       symbol: params.symbol.toUpperCase(),
       type: params.type,

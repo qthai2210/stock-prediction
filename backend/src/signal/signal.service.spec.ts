@@ -15,8 +15,14 @@ describe('SignalService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SignalService,
-        { provide: GenerateSignalsUseCase, useValue: mockGenerateSignalsUseCase },
-        { provide: EvaluateSignalAccuracyUseCase, useValue: mockEvaluateSignalAccuracyUseCase },
+        {
+          provide: GenerateSignalsUseCase,
+          useValue: mockGenerateSignalsUseCase,
+        },
+        {
+          provide: EvaluateSignalAccuracyUseCase,
+          useValue: mockEvaluateSignalAccuracyUseCase,
+        },
         { provide: GetSignalStatsUseCase, useValue: mockGetSignalStatsUseCase },
       ],
     }).compile();
