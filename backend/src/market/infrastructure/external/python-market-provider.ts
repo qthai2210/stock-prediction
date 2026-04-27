@@ -48,9 +48,9 @@ export class PythonMarketProvider implements IMarketProvider {
     });
   }
 
-  async getLiveQuote(symbol: string): Promise<any> {
+  getLiveQuote(_symbol: string): Promise<any> {
     // Implementation for fetching specific stock quote
-    throw new Error('Method not implemented.');
+    return Promise.reject(new Error('Method not implemented.'));
   }
 
   private mapToEntity(data: {

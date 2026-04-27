@@ -2,7 +2,7 @@ import { Injectable, Inject, BadRequestException, NotFoundException } from '@nes
 import { IOrderRepository } from '../../domain/repositories/order.repository.interface';
 import { IPositionRepository } from '../../domain/repositories/position.repository.interface';
 import { IUserRepository } from '../../../auth/domain/repositories/user.repository.interface';
-import { Order, OrderStatus } from '../../domain/entities/order.entity';
+import { Order, OrderStatus, OrderSide, OrderType } from '../../domain/entities/order.entity';
 import { Position } from '../../domain/entities/position.entity';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -38,8 +38,8 @@ export class PlaceOrderUseCase {
       // Create Order instance to determine initial status
       const orderData = Order.create({
         symbol: input.symbol,
-        type: input.type as any,
-        orderType: input.orderType as any,
+        type: input.type as OrderSide,
+        orderType: input.orderType as OrderType,
         quantity: input.quantity,
         price: input.price,
         stopPrice: input.stopPrice,

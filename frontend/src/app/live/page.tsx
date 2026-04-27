@@ -23,14 +23,9 @@ interface TradingSignal {
 
 export default function LiveSignalsPage() {
   const [signals, setSignals] = useState<TradingSignal[]>([]);
-  const { data: newSignal, connected } = useWebSocket<TradingSignal>('trading_signal');
-
-  // Handle incoming live signals
-  useEffect(() => {
-    if (newSignal) {
-      setSignals(prev => [newSignal, ...prev].slice(0, 50)); // Keep last 50 signals
-    }
-  }, [newSignal]);
+  const { connected } = useWebSocket<TradingSignal>('trading_signal', (payload) => {
+    setSignals(prev => [payload, ...prev].slice(0, 50)); // Keep last 50 signals
+  });
 
   // Initial fetch for recent signals
   useEffect(() => {
