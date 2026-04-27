@@ -24,10 +24,10 @@ interface SignalLog {
 interface PerformanceStats {
   summary: {
     total: number;
-    winRate: number;
+    winRate: number | string;
   };
   strategyStats: Record<string, StrategyStat>;
-  recentSignals: SignalLog[];
+  recentSignals: any[];
 }
 
 interface StatsProps {

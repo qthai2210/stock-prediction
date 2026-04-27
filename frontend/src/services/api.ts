@@ -94,21 +94,19 @@ export const api = {
     },
 
     async getSignalStats(): Promise<{
-        total_active: number;
-        avg_confidence: number;
-        top_strategy: string;
+        summary: {
+            total: number;
+            winRate: string | number;
+        };
+        strategyStats: Record<string, { total: number; success: number; profit: number }>;
+        recentSignals: any[];
     }> {
         try {
             const response = await fetch(`${API_URL}/signals/stats`);
             if (!response.ok) {
                 throw new Error('Failed to fetch signal stats');
             }
-            const data = await response.json();
-            return data as {
-                total_active: number;
-                avg_confidence: number;
-                top_strategy: string;
-            };
+            return await response.json();
         } catch (error) {
             console.error('API Error:', error);
             throw error;
