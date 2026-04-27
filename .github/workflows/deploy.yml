@@ -1,0 +1,75 @@
+name: Deployment
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: |
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: |
+          echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Copy docker-compose.prod.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/app/stock-prediction"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          envs: IMAGE_NAME_LOWER,REGISTRY=ghcr.io
+          script: |
+            mkdir -p /app/stock-prediction
+            cd /app/stock-prediction
+            
+            # Create/Update .env file from secrets
+            cat <<EOF > .env
+            REGISTRY=ghcr.io
+            IMAGE_NAME=${IMAGE_NAME_LOWER}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            RABBITMQ_URL=${{ secrets.RABBITMQ_URL }}
+            PROD_API_URL=${{ secrets.PROD_API_URL }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}
+            RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}
+            EOF
+            
+            # Pull latest images
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Run database migrations
+            docker compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy
+            
+            # Start services
+            docker compose -f docker-compose.prod.yml up -d
+            
+            # Cleanup
+            docker image prune -f
+            
+            # Health check (backend is on port 3000 inside container, check through mapped port or localhost)
+            # Adjust according to how you expose the app
+            echo "Waiting for services to start..."
+            sleep 15
+            curl -f http://localhost:3000/health || echo "Health check failed, but continuing..."
