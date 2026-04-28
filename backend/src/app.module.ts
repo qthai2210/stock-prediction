@@ -30,7 +30,7 @@ import { BffModule } from './bff/bff.module';
     ThrottlerModule.forRoot({
       throttlers: [
         { name: 'global', ttl: 60_000, limit: 100 },
-        { name: 'orders', ttl: 1_000,  limit: 5  },
+        { name: 'orders', ttl: 1_000, limit: 5 },
       ],
     }),
 

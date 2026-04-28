@@ -12,7 +12,7 @@ export class SignalController {
 
   @Get('history')
   async getHistory() {
-      // Proxy to get signals from DB if needed specifically
-      return this.signalService.getSignalStats(); // Reuse stats for now as it contains recent signals
+    // Proxy to get signals from DB if needed specifically
+    return this.signalService.getSignalStats(); // Reuse stats for now as it contains recent signals
   }
 }

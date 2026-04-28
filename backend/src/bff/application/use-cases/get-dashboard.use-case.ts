@@ -27,12 +27,13 @@ export class GetDashboardUseCase {
     return {
       timestamp: new Date().toISOString(),
       prediction: prediction.status === 'fulfilled' ? prediction.value : null,
-      market:     market.status     === 'fulfilled' ? market.value     : null,
-      news:       news.status       === 'fulfilled' ? news.value       : null,
+      market: market.status === 'fulfilled' ? market.value : null,
+      news: news.status === 'fulfilled' ? news.value : null,
       errors: {
-        prediction: prediction.status === 'rejected' ? prediction.reason : null,
-        market:     market.status     === 'rejected' ? market.reason     : null,
-        news:       news.status       === 'rejected' ? news.reason       : null,
+        prediction:
+          prediction.status === 'rejected' ? String(prediction.reason) : null,
+        market: market.status === 'rejected' ? String(market.reason) : null,
+        news: news.status === 'rejected' ? String(news.reason) : null,
       },
     };
   }

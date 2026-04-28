@@ -2,12 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { IPredictionRepository } from '../../domain/repositories/prediction.repository.interface';
 import { Prediction } from '../../domain/entities/prediction.entity';
+import { Prediction as PrismaPredictionModel } from '@prisma/client';
+
+export interface PredictionSaveData {
+  symbol: string;
+  currentPrice: number;
+  predictedPrice: number;
+  changePercent: number;
+  rsi: number;
+  macd: number;
+}
 
 @Injectable()
 export class PrismaPredictionRepository implements IPredictionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(data: any): Promise<Prediction> {
+  async save(data: PredictionSaveData): Promise<Prediction> {
     const prismaPrediction = await this.prisma.prediction.create({
       data: {
         symbol: data.symbol,
@@ -36,18 +46,18 @@ export class PrismaPredictionRepository implements IPredictionRepository {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
-    return prismaPredictions.map(this.mapToEntity);
+    return prismaPredictions.map((p) => this.mapToEntity(p));
   }
 
-  private mapToEntity(prismaPrediction: any): Prediction {
+  private mapToEntity(prismaPrediction: PrismaPredictionModel): Prediction {
     return new Prediction(
       prismaPrediction.id,
       prismaPrediction.symbol,
-      prismaPrediction.currentPrice,
-      prismaPrediction.predictedPrice,
-      prismaPrediction.changePercent,
-      prismaPrediction.rsi,
-      prismaPrediction.macd,
+      Number(prismaPrediction.currentPrice),
+      Number(prismaPrediction.predictedPrice),
+      Number(prismaPrediction.changePercent),
+      Number(prismaPrediction.rsi),
+      Number(prismaPrediction.macd),
       prismaPrediction.createdAt,
     );
   }

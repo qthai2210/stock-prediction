@@ -1,7 +1,7 @@
 "use client";
 
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { AlertCircle, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 
 export interface TradingSignal {
     symbol: string;

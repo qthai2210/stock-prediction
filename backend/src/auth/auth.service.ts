@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { RegisterUseCase, RegisterInput } from './application/use-cases/register.use-case';
-import { LoginUseCase, LoginInput } from './application/use-cases/login.use-case';
+import {
+  RegisterUseCase,
+  RegisterInput,
+} from './application/use-cases/register.use-case';
+import {
+  LoginUseCase,
+  LoginInput,
+} from './application/use-cases/login.use-case';
 import { ValidateTokenUseCase } from './application/use-cases/validate-token.use-case';
-
-export interface JwtPayload {
-  sub: number;   
-  email: string;
-  role: string;
-  iat?: number;
-  exp?: number;
-}
+import { JwtPayload } from './domain/services/token.service.interface';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +26,7 @@ export class AuthService {
     return this.loginUseCase.execute(dto);
   }
 
-  async validateToken(token: string): Promise<JwtPayload> {
+  validateToken(token: string): JwtPayload {
     return this.validateTokenUseCase.execute(token);
   }
 }

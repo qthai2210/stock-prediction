@@ -2,7 +2,7 @@ import { Injectable, Inject, ConflictException } from '@nestjs/common';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { IHashService } from '../../domain/services/hash.service.interface';
 import { ITokenService } from '../../domain/services/token.service.interface';
-import { User, UserRole } from '../../domain/entities/user.entity';
+import { UserRole } from '../../domain/entities/user.entity';
 
 export interface RegisterInput {
   email: string;
@@ -34,7 +34,11 @@ export class RegisterUseCase {
       role: UserRole.USER,
     });
 
-    const token = this.tokenService.sign({ sub: user.id, email: user.email, role: user.role });
+    const token = this.tokenService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       user: {

@@ -26,12 +26,19 @@ export class LoginUseCase {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordMatch = await this.hashService.compare(input.password, user.passwordHash);
+    const passwordMatch = await this.hashService.compare(
+      input.password,
+      user.passwordHash,
+    );
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.tokenService.sign({ sub: user.id, email: user.email, role: user.role });
+    const token = this.tokenService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       user: {

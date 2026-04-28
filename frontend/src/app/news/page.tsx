@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/services/api';
+import { api, NewsData } from '@/services/api';
 import { InfoCard } from "@/components/ui/InfoCard";
 import { Search, Loader2, AlertCircle, Newspaper, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export default function NewsPage() {
     const [symbol, setSymbol] = useState('');
     const [loading, setLoading] = useState(false);
-    const [data, setData] = useState<any | null>(null);
+    const [data, setData] = useState<NewsData | null>(null);
     const [error, setError] = useState('');
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [autoRefresh, setAutoRefresh] = useState(true);

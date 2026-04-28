@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OrdersService, PlaceOrderDto } from '../orders/orders.service';
+import { PlaceOrderUseCase } from '../orders/application/use-cases/place-order.use-case';
 import { GetDashboardUseCase } from './application/use-cases/get-dashboard.use-case';
 import { GetSignalPanelUseCase } from './application/use-cases/get-signal-panel.use-case';
+import { GetPortfolioUseCase } from './application/use-cases/get-portfolio.use-case';
+import { PlaceOrderInput } from '../orders/application/use-cases/place-order.use-case';
 
 @Injectable()
 export class BffService {
@@ -10,7 +12,8 @@ export class BffService {
   constructor(
     private readonly getDashboardUseCase: GetDashboardUseCase,
     private readonly getSignalPanelUseCase: GetSignalPanelUseCase,
-    private readonly ordersService: OrdersService,
+    private readonly getPortfolioUseCase: GetPortfolioUseCase,
+    private readonly placeOrderUseCase: PlaceOrderUseCase,
   ) {}
 
   async getDashboard() {
@@ -21,16 +24,12 @@ export class BffService {
     return this.getSignalPanelUseCase.execute(symbol);
   }
 
-  async placeOrder(dto: PlaceOrderDto, userId: number) {
-    return this.ordersService.placeOrder(dto, userId);
+  async placeOrder(dto: Omit<PlaceOrderInput, 'userId'>, userId: number) {
+    const input: PlaceOrderInput = { ...dto, userId };
+    return this.placeOrderUseCase.execute(input);
   }
 
   async getPortfolio(userId: number) {
-    const orders = await this.ordersService.getOrdersByUser(userId);
-    return {
-      userId,
-      totalOrders: orders.length,
-      orders,
-    };
+    return this.getPortfolioUseCase.execute(userId);
   }
 }

@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
@@ -63,25 +64,34 @@ def backtest_strategy(symbol='VCB', days=100):
                 config['signals'].append(signal)
                 config['profits'].append(profit)
 
-    # 5. In kết quả
-    print("\n" + "="*70)
-    print(f"{'CHIẾN LƯỢC':<25} | {'SỐ LỆNH':<10} | {'TỶ LỆ THẮNG':<12} | {'LN TB (%)':<10}")
-    print("-" * 70)
+    # 5. Prepare results
+    results = {
+        'symbol': symbol,
+        'days': days,
+        'strategies': {}
+    }
     
     for name, config in strategies.items():
         profits = config['profits']
         if not profits:
-            print(f"{name:<25} | {'0':<10} | {'0%':<12} | {'0.00':<10}")
+            results['strategies'][name] = {
+                'trades': 0,
+                'win_rate': 0,
+                'avg_profit': 0
+            }
             continue
             
         win_rate = (len([p for p in profits if p > 0]) / len(profits)) * 100
         avg_profit = sum(profits) / len(profits)
-        
-        print(f"{name:<25} | {len(profits):<10} | {win_rate:>10.2f}% | {avg_profit:>8.2f}%")
+        results['strategies'][name] = {
+            'trades': len(profits),
+            'win_rate': round(win_rate, 2),
+            'avg_profit': round(avg_profit, 2)
+        }
     
-    print("="*70)
-    print("💡 Lưu ý: Backtest giả định giữ lệnh trong 3 ngày và chưa tính phí giao dịch.")
+    return results
 
 if __name__ == "__main__":
     symbol = sys.argv[1] if len(sys.argv) > 1 else 'VCB'
-    backtest_strategy(symbol)
+    res = backtest_strategy(symbol)
+    print(json.dumps(res, indent=4))

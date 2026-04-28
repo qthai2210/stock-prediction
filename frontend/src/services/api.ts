@@ -1,23 +1,25 @@
 export interface PredictionResult {
     symbol: string;
-    latest_date: string;
-    latest_close: number;
-    prediction: number;
-    change: number;
-    change_pct: number;
-    indicators: {
+    latest_date?: string;
+    latest_close?: number;
+    prediction?: number;
+    change?: number;
+    change_pct?: number;
+    indicators?: {
         rsi: number;
         macd: number;
         bb_pos: number;
     };
-    history: {
+    history?: {
         date: string;
         price: number;
     }[];
-    top_features: {
+    top_features?: {
         feature: string;
         importance: number;
     }[];
+    status?: 'completed' | 'processing' | 'failed';
+    message?: string;
 }
 
 const getApiUrl = () => {
@@ -36,6 +38,36 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+export interface NewsData {
+    sentiment: number;
+    headlines: string[];
+    symbol: string;
+}
+
+export interface MarketData {
+    vn_index: { value: number; change: number; changePercent: number; volume: number };
+    hnx_index: { value: number; change: number; changePercent: number; volume: number };
+    upcom_index: { value: number; change: number; changePercent: number; volume: number };
+    top_gainers: { symbol: string; price: number; change: number; changePercent: number; volume: number }[];
+    top_losers: { symbol: string; price: number; change: number; changePercent: number; volume: number }[];
+    updatedAt: string;
+}
+
+export interface SignalLog {
+    id: number | string;
+    symbol: string;
+    type: 'BUY' | 'SELL' | 'HOLD';
+    strategy: string;
+    priceAtTime: number;
+    targetPrice: number;
+    confidence: number;
+    status: 'ACTIVE' | 'SUCCESS' | 'FAIL' | 'EXPIRED';
+    createdAt: string;
+    actualPrice?: number;
+    profitPct?: number;
+    closedAt?: string;
+}
+
 export const api = {
     async getPrediction(symbol: string): Promise<PredictionResult> {
         try {
@@ -50,7 +82,7 @@ export const api = {
         }
     },
 
-    async getNews(symbol: string): Promise<any> {
+    async getNews(symbol: string): Promise<NewsData> {
         try {
             const response = await fetch(`${API_URL}/news/${symbol}`);
             if (!response.ok) {
@@ -63,7 +95,7 @@ export const api = {
         }
     },
 
-    async getMarketOverview(): Promise<any> {
+    async getMarketOverview(): Promise<MarketData> {
         try {
             const response = await fetch(`${API_URL}/market/overview`);
             if (!response.ok) {
@@ -76,7 +108,14 @@ export const api = {
         }
     },
 
-    async getSignalStats(): Promise<any> {
+    async getSignalStats(): Promise<{
+        summary: {
+            total: number;
+            winRate: string | number;
+        };
+        strategyStats: Record<string, { total: number; success: number; profit: number }>;
+        recentSignals: SignalLog[];
+    }> {
         try {
             const response = await fetch(`${API_URL}/signals/stats`);
             if (!response.ok) {

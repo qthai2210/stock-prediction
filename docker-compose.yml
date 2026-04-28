@@ -12,6 +12,19 @@ services:
     networks:
       - stock_network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - stock_network
+
   postgres:
     image: postgres:15-alpine
     environment:
@@ -34,12 +47,14 @@ services:
       DATABASE_URL: "postgresql://admin:password123@postgres:5432/stock_prediction?schema=public"
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      RABBITMQ_URL: "amqp://admin:password123@rabbitmq:5672"
       JWT_SECRET: "your-super-secret-key-change-me"
     ports:
       - "3000:3000"
     depends_on:
       - postgres
       - redis
+      - rabbitmq
     networks:
       - stock_network
 
@@ -50,9 +65,11 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      RABBITMQ_URL: "amqp://admin:password123@rabbitmq:5672"
       AI_WORKER_CONCURRENCY: 4
     depends_on:
       - redis
+      - rabbitmq
     networks:
       - stock_network
 
@@ -76,3 +93,4 @@ networks:
 volumes:
   redis_data:
   postgres_data:
+  rabbitmq_data:

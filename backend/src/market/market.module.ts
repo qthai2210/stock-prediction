@@ -6,15 +6,15 @@ import { PythonMarketProvider } from './infrastructure/external/python-market-pr
 import { GetMarketOverviewUseCase } from './application/use-cases/get-market-overview.use-case';
 
 @Module({
-    controllers: [MarketController],
-    providers: [
-        MarketService,
-        GetMarketOverviewUseCase,
-        {
-            provide: IMarketProvider,
-            useClass: PythonMarketProvider,
-        },
-    ],
-    exports: [MarketService, GetMarketOverviewUseCase],
+  controllers: [MarketController],
+  providers: [
+    MarketService,
+    GetMarketOverviewUseCase,
+    {
+      provide: IMarketProvider,
+      useClass: PythonMarketProvider,
+    },
+  ],
+  exports: [MarketService, GetMarketOverviewUseCase],
 })
-export class MarketModule { }
+export class MarketModule {}

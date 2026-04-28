@@ -12,10 +12,12 @@ import { Logger } from '@nestjs/common';
     origin: '*',
   },
 })
-export class TradingGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class TradingGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
-  
+
   private logger: Logger = new Logger('TradingGateway');
 
   handleConnection(client: Socket) {

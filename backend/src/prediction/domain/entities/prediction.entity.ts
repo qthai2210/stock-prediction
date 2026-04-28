@@ -1,3 +1,10 @@
+export enum PredictionStatus {
+  COMPLETED = 'completed',
+  PROCESSING = 'processing',
+  FAILED = 'failed',
+  TRAINING_REQUIRED = 'training_required',
+}
+
 export class Prediction {
   constructor(
     public readonly id: number,
@@ -13,14 +20,15 @@ export class Prediction {
 
 export interface PredictionResult {
   symbol: string;
-  prediction: number;
-  latest_close: number;
-  change_pct: number;
-  indicators: {
+  prediction?: number;
+  latest_close?: number;
+  change_pct?: number;
+  indicators?: {
     rsi: number;
     macd: number;
   };
   cached: boolean;
-  status?: string;
+  status?: PredictionStatus;
+  message?: string;
   error?: string;
 }

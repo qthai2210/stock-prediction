@@ -1,9 +1,9 @@
 export class NewsSentiment {
   constructor(
     public readonly symbol: string,
-    public readonly sentimentScore: number,
+    public readonly sentiment: number, // 0 to 1
     public readonly sentimentLabel: string,
     public readonly articleCount: number,
-    public readonly latestArticles: any[],
+    public readonly headlines: string[],
   ) {}
 }

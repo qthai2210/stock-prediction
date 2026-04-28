@@ -1,14 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { IOrderRepository } from '../../domain/repositories/order.repository.interface';
-import { Order, OrderSide, OrderType, OrderStatus } from '../../domain/entities/order.entity';
+import {
+  Order,
+  OrderSide,
+  OrderType,
+  OrderStatus,
+} from '../../domain/entities/order.entity';
+import { Prisma, Order as PrismaOrderModel } from '@prisma/client';
 
 @Injectable()
 export class PrismaOrderRepository implements IOrderRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(data: any): Promise<Order> {
-    const prismaOrder = await this.prisma.order.create({
+  async save(data: Order, tx?: unknown): Promise<Order> {
+    const client = (tx as Prisma.TransactionClient) || this.prisma;
+    const prismaOrder = await client.order.create({
       data: {
         symbol: data.symbol,
         type: data.type,
@@ -36,31 +43,36 @@ export class PrismaOrderRepository implements IOrderRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    return prismaOrders.map(this.mapToEntity);
+    return prismaOrders.map((order) => this.mapToEntity(order));
   }
 
-  async updateStatus(id: number, status: OrderStatus): Promise<Order> {
-    const prismaOrder = await this.prisma.order.update({
+  async updateStatus(
+    id: number,
+    status: OrderStatus,
+    tx?: unknown,
+  ): Promise<Order> {
+    const client = (tx as Prisma.TransactionClient) || this.prisma;
+    const prismaOrder = await client.order.update({
       where: { id },
       data: { status },
     });
     return this.mapToEntity(prismaOrder);
   }
 
-  private mapToEntity(prismaOrder: any): Order {
+  private mapToEntity(prismaOrder: PrismaOrderModel): Order {
     return new Order(
       prismaOrder.id,
       prismaOrder.symbol,
       prismaOrder.type as OrderSide,
       prismaOrder.orderType as OrderType,
       prismaOrder.quantity,
-      prismaOrder.price,
+      Number(prismaOrder.price),
       prismaOrder.status as OrderStatus,
       prismaOrder.userId,
       prismaOrder.createdAt,
-      prismaOrder.stopPrice,
-      prismaOrder.filledQuantity,
-      prismaOrder.avgFillPrice,
+      prismaOrder.stopPrice ? Number(prismaOrder.stopPrice) : undefined,
+      Number(prismaOrder.filledQuantity),
+      prismaOrder.avgFillPrice ? Number(prismaOrder.avgFillPrice) : undefined,
     );
   }
 }
